@@ -48,6 +48,9 @@ function registerLine(id){
 		setUpEvent(config.lines[id].socket, methods[i])
 	}
 
+
+
+	// set up socket event method
 	function setUpEvent(socket, method){
 		socket.on(method, function(data){
 			io.emit("setSession", {
@@ -69,6 +72,7 @@ function registerLine(id){
 
 
 
+// send online lines event to socket or broadcast to all clients
 function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
