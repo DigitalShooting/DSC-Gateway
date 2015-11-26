@@ -65,10 +65,12 @@ function registerLine(id){
 	// set up connection methods
 	function setUpConnection(socket){
 		socket.on("connect", function(){
+			console.log(id+" connected")
 			linesOnline[id] = true
 			sendOnlineLines(io)
 		})
 		socket.on("disconnect", function(){
+			console.log(id+" disconnected")
 			linesOnline[id] = false
 			sendOnlineLines(io)
 		})
