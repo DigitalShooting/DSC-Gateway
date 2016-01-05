@@ -32,7 +32,7 @@ io.on('connection', function(socket){
 // -------- Line Sockets --------
 
 // store bool for each line id (true = online)
-var linesOnline = {}
+var linesOnline = {};
 
 for (id in config.lines){
 	registerLine(id)
@@ -41,7 +41,12 @@ for (id in config.lines){
 // Register line with id
 function registerLine(id){
 	var line = config.lines[id]
-	linesOnline[id] = false
+
+	linesOnline[id] = {};
+	linesOnline[id].id = id;
+	linesOnline[id].label = line.label;
+	linesOnline[id].labelShort = line.labelShort;
+	linesOnline[id].online = false
 
 	config.lines[id].socket = SocketClient("http://"+line.ip+":"+line.port)
 
@@ -66,12 +71,12 @@ function registerLine(id){
 	function setUpConnection(socket){
 		socket.on("connect", function(){
 			console.log(id+" connected")
-			linesOnline[id] = true
+			linesOnline[id].online = true
 			sendOnlineLines(io)
 		})
 		socket.on("disconnect", function(){
 			console.log(id+" disconnected")
-			linesOnline[id] = false
+			linesOnline[id].online = false
 			sendOnlineLines(io)
 		})
 	}
