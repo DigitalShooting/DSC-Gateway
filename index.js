@@ -1,32 +1,47 @@
-var express = require("express")
-var http = require("http")
-var config = require("./config/")
-var SocketClient = require("socket.io-client")
+var express = require("express");
+var http = require("http");
+var config = require("./config/");
+var SocketClient = require("socket.io-client");
 var http = require('http');
 var RestClient = require('node-rest-client').Client;
 var rest = new RestClient();
-var mysql = require("./lib/mysql.js")
+var mysql = require("./lib/mysql.js");
+var child_process = require('child_process');
+var exec = require("exec");
 
 
 
 // -------- Server Socket --------
-var app = express({ strict: true })
-var server = http.Server(app)
-var io = require('socket.io')(server)
-server.listen(config.network.port, config.network.address)
+var app = express({ strict: true });
+var server = http.Server(app);
+var io = require('socket.io')(server);
+server.listen(config.network.port, config.network.address);
 server.on('listening', function() {
-	console.log('Express server started on at %s:%s', server.address().address, server.address().port)
+	console.log('Express server started on at %s:%s', server.address().address, server.address().port);
 })
 
 io.on('connection', function(socket){
 	// send online DSCs to new connected client
-	sendOnlineLines(socket)
+	sendOnlineLines(socket);
 
 	// triggers any given event on DSC
 	socket.on("setLine", function(data){
-		var lineSocket = config.lines[data.line].socket
+		var lineSocket = config.lines[data.line].socket;
 		if (lineSocket != undefined){
-			lineSocket.emit(data.method, data.data)
+			lineSocket.emit(data.method, data.data);
+		}
+	})
+
+	// set power performs wakeonlan or ssh shutdown on target machine
+	socket.on('setPower', function(data){
+		var line = config.lines[data.line];
+		if (data.state == true){
+			// Power On
+			exec(["wakeonlan", line.mac], function(err, out, code) { });
+		}
+		else {
+			// Power Off
+			child_process.exec(["ssh -t "+line.user+"@"+line.ip+" 'sudo shutdown -h now'"], function(err, out, code) { });
 		}
 	})
 })
@@ -39,52 +54,52 @@ io.on('connection', function(socket){
 var linesOnline = {};
 
 for (id in config.lines){
-	registerLine(id)
+	registerLine(id);
 }
 
 // Register line with id
 function registerLine(id){
-	var line = config.lines[id]
+	var line = config.lines[id];
 
 	linesOnline[id] = {};
 	linesOnline[id].id = id;
 	linesOnline[id].label = line.label;
 	linesOnline[id].labelShort = line.labelShort;
-	linesOnline[id].online = false
+	linesOnline[id].online = false;
 
-	config.lines[id].socket = SocketClient("http://"+line.ip+":"+line.port)
+	config.lines[id].socket = SocketClient("http://"+line.ip+":"+line.port);
 
 	// redirect following methods
-	var methods = ["setSession", "setConfig", "setData"]
+	var methods = ["setSession", "setConfig", "setData"];
 	for (i in methods){
-		setUpEvent(config.lines[id].socket, methods[i])
+		setUpEvent(config.lines[id].socket, methods[i]);
 	}
-	setUpConnection(config.lines[id].socket)
+	setUpConnection(config.lines[id].socket);
 
 	// set up socket event method
 	function setUpEvent(socket, method){
 		socket.on(method, function(data){
 			if (method == "setSession"){
-				poolLine(line)
+				poolLine(line);
 			}
 			io.emit(method, {
 				line: line._id,
 				data: data,
-			})
-		})
+			});
+		});
 	}
 
 	// set up connection methods
 	function setUpConnection(socket){
 		socket.on("connect", function(){
-			console.log(id+" connected")
-			linesOnline[id].online = true
-			sendOnlineLines(io)
+			console.log(id+" connected");
+			linesOnline[id].online = true;
+			sendOnlineLines(io);
 		})
 		socket.on("disconnect", function(){
-			console.log(id+" disconnected")
-			linesOnline[id].online = false
-			sendOnlineLines(io)
+			console.log(id+" disconnected");
+			linesOnline[id].online = false;
+			sendOnlineLines(io);
 		})
 	}
 }
@@ -93,7 +108,7 @@ function registerLine(id){
 function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
-	})
+	});
 }
 
 
@@ -108,7 +123,7 @@ function poolLine(line){
 	if (time == undefined){
 		time = parseInt(Date.now()/1000) - config.dataPooling.startupPooling;
 	}
-	line.loastPoolTime = parseInt(Date.now()/1000)
+	line.loastPoolTime = parseInt(Date.now()/1000);
 
 
 
@@ -125,16 +140,14 @@ function poolLine(line){
 				single.x,
 				single.y,
 				single.date,
-			])
+			]);
 		}
 		if (insertData.length >= 1){
 			mysql.query(
 				"INSERT INTO shot (number, sessionID, ring, teiler, winkel, x, y, date) " +
 				"VALUES ?;",
 				[insertData],
-				function(err, rows) {
-
-				}
+				function(err, rows) {}
 			);
 		}
 	});
@@ -150,16 +163,14 @@ function poolLine(line){
 				single.sessionGroupID,
 				single.part,
 				single.date,
-			])
+			]);
 		}
 		if (insertData.length >= 1){
 			mysql.query(
 				"INSERT INTO session (id, sessionGroupID, part, date) " +
 				"VALUES ?;",
 				[insertData],
-				function(err, rows) {
-
-				}
+				function(err, rows) {}
 			);
 		}
 	});
@@ -175,16 +186,14 @@ function poolLine(line){
 				single.disziplin,
 				single.line,
 				single.date,
-			])
+			]);
 		}
 		if (insertData.length >= 1){
 			mysql.query(
 				"INSERT INTO sessionGroup (id, disziplin, line, date) " +
 				"VALUES ?;",
 				[insertData],
-				function(err, rows) {
-
-				}
+				function(err, rows) {}
 			);
 		}
 	});
