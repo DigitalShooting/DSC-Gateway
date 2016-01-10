@@ -2,6 +2,10 @@ var express = require("express")
 var http = require("http")
 var config = require("./config/")
 var SocketClient = require("socket.io-client")
+var http = require('http');
+var RestClient = require('node-rest-client').Client;
+var rest = new RestClient();
+var mysql = require("./lib/mysql.js")
 
 
 
@@ -60,6 +64,9 @@ function registerLine(id){
 	// set up socket event method
 	function setUpEvent(socket, method){
 		socket.on(method, function(data){
+			if (method == "setSession"){
+				poolLine(line)
+			}
 			io.emit(method, {
 				line: line._id,
 				data: data,
@@ -87,4 +94,98 @@ function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
 	})
+}
+
+
+
+
+function poolLine(line){
+	if (config.dataPooling.enabled == false){
+		return;
+	}
+
+	var time = line.loastPoolTime;
+	if (time == undefined){
+		time = parseInt(Date.now()/1000) - config.dataPooling.startupPooling;
+	}
+	line.loastPoolTime = parseInt(Date.now()/1000)
+
+
+
+	rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
+		var insertData = [];
+		for (i in data){
+			var single = data[i];
+			insertData.push([
+				single.number,
+				single.sessionID,
+				single.ring,
+				single.teiler,
+				single.winkel,
+				single.x,
+				single.y,
+				single.date,
+			])
+		}
+		if (insertData.length >= 1){
+			mysql.query(
+				"INSERT INTO shot (number, sessionID, ring, teiler, winkel, x, y, date) " +
+				"VALUES ?;",
+				[insertData],
+				function(err, rows) {
+
+				}
+			);
+		}
+	});
+
+
+
+	rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
+		var insertData = [];
+		for (i in data){
+			var single = data[i];
+			insertData.push([
+				single.id,
+				single.sessionGroupID,
+				single.part,
+				single.date,
+			])
+		}
+		if (insertData.length >= 1){
+			mysql.query(
+				"INSERT INTO session (id, sessionGroupID, part, date) " +
+				"VALUES ?;",
+				[insertData],
+				function(err, rows) {
+
+				}
+			);
+		}
+	});
+
+
+
+	rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
+		var insertData = [];
+		for (i in data){
+			var single = data[i];
+			insertData.push([
+				single.id,
+				single.disziplin,
+				single.line,
+				single.date,
+			])
+		}
+		if (insertData.length >= 1){
+			mysql.query(
+				"INSERT INTO sessionGroup (id, disziplin, line, date) " +
+				"VALUES ?;",
+				[insertData],
+				function(err, rows) {
+
+				}
+			);
+		}
+	});
 }
