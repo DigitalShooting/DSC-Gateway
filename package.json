@@ -8,7 +8,8 @@
     "socket.io": "^1.3.6",
     "socket.io-client": "^1.3.7",
     "node-rest-client": "x",
-    "mysql": "x"
+    "mysql": "x",
+    "exec": "x"
   },
   "main": "index.js"
 }
