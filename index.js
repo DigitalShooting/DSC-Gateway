@@ -24,6 +24,10 @@ io.on('connection', function(socket){
 	// send online DSCs to new connected client
 	sendOnlineLines(socket);
 
+	socket.on("getLines", function(){
+		sendOnlineLines(socket);
+	});
+
 	// triggers any given event on DSC
 	socket.on("setLine", function(data){
 		var lineSocket = config.lines[data.line].socket;
@@ -119,82 +123,117 @@ function poolLine(line){
 		return;
 	}
 
-	var time = line.loastPoolTime;
-	if (time == undefined){
-		time = parseInt(Date.now()/1000) - config.dataPooling.startupPooling;
-	}
-	line.loastPoolTime = parseInt(Date.now()/1000);
 
-
-
-	rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
-		var insertData = [];
-		for (i in data){
-			var single = data[i];
-			insertData.push([
-				single.number,
-				single.sessionID,
-				single.ring,
-				single.teiler,
-				single.winkel,
-				single.x,
-				single.y,
-				single.date,
-			]);
+	mysql.query(
+		"SELECT MAX(unixtime) as 'unixtime' FROM shot;",
+		[],
+		function(err, rows) {
+			var time = 0
+			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
+				time = rows[0].unixtime;
+			}
+			console.log(time + " "+ rows + " "+ err)
+			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
+				var insertData = [];
+				for (i in data){
+					var single = data[i];
+					if (single != undefined && single.id != undefined){
+						insertData.push([
+							single.id,
+							single.number,
+							single.sessionID,
+							single.ring,
+							single.teiler,
+							single.winkel,
+							single.x,
+							single.y,
+							single.unixtime,
+						]);
+					}
+				}
+				if (insertData.length >= 1){
+					mysql.query(
+						"INSERT INTO shot (id, number, sessionID, ring, teiler, winkel, x, y, unixtime) " +
+						"VALUES ?;",
+						[insertData],
+						function(err, rows) {}
+					);
+				}
+			});
 		}
-		if (insertData.length >= 1){
-			mysql.query(
-				"INSERT INTO shot (number, sessionID, ring, teiler, winkel, x, y, date) " +
-				"VALUES ?;",
-				[insertData],
-				function(err, rows) {}
-			);
+	);
+
+
+
+	mysql.query(
+		"SELECT MAX(unixtime) as 'unixtime' FROM session;",
+		function(err, rows) {
+			var time = 0
+			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
+				time = rows[0].unixtime;
+			}
+			console.log(time + " "+ rows + " "+ err)
+			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
+				console.log(data);
+				var insertData = [];
+				for (i in data){
+					var single = data[i];
+					if (single != undefined && single.id != undefined){
+						insertData.push([
+							single.id,
+							single.sessionGroupID,
+							single.part,
+							single.unixtime,
+						]);
+					}
+				}
+				if (insertData.length >= 1){
+					mysql.query(
+						"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
+						"VALUES ?;",
+						[insertData],
+						function(err, rows) {}
+					);
+				}
+			});
 		}
-	});
+	);
 
 
 
-	rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
-		var insertData = [];
-		for (i in data){
-			var single = data[i];
-			insertData.push([
-				single.id,
-				single.sessionGroupID,
-				single.part,
-				single.date,
-			]);
+	mysql.query(
+		"SELECT MAX(unixtime) as 'unixtime' FROM sessionGroup;",
+		function(err, rows) {
+			var time = 0
+			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
+				time = rows[0].unixtime;
+			}
+
+			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
+				var insertData = [];
+				console.log(data)
+				for (i in data){
+					var single = data[i];
+					if (single != undefined && single.id != undefined){
+						insertData.push([
+							single.id,
+							single.disziplin,
+							single.line,
+							single.unixtime,
+						]);
+					}
+				}
+
+				if (insertData.length >= 1){
+					mysql.query(
+						"INSERT INTO sessionGroup (id, disziplin, line, unixtime) " +
+						"VALUES ?;",
+						[insertData],
+						function(err, rows) {}
+					);
+				}
+			});
 		}
-		if (insertData.length >= 1){
-			mysql.query(
-				"INSERT INTO session (id, sessionGroupID, part, date) " +
-				"VALUES ?;",
-				[insertData],
-				function(err, rows) {}
-			);
-		}
-	});
+	);
 
-
-
-	rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
-		var insertData = [];
-		for (i in data){
-			var single = data[i];
-			insertData.push([
-				single.id,
-				single.disziplin,
-				single.line,
-				single.date,
-			]);
-		}
-		if (insertData.length >= 1){
-			mysql.query(
-				"INSERT INTO sessionGroup (id, disziplin, line, date) " +
-				"VALUES ?;",
-				[insertData],
-				function(err, rows) {}
-			);
-		}
-	});
 }
