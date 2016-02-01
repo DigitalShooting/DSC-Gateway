@@ -68,6 +68,8 @@ function registerLine(id){
 	linesOnline[id] = {};
 	linesOnline[id].id = id;
 	linesOnline[id].label = line.label;
+	linesOnline[id].ip = line.ip;
+	linesOnline[id].port = line.port;
 	linesOnline[id].labelShort = line.labelShort;
 	linesOnline[id].online = false;
 
@@ -132,7 +134,6 @@ function poolLine(line){
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
 				time = rows[0].unixtime;
 			}
-			console.log(time + " "+ rows + " "+ err)
 			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
 				var insertData = [];
 				for (i in data){
@@ -143,6 +144,7 @@ function poolLine(line){
 							single.number,
 							single.sessionID,
 							single.ring,
+							single.ringValue,
 							single.teiler,
 							single.winkel,
 							single.x,
@@ -153,7 +155,7 @@ function poolLine(line){
 				}
 				if (insertData.length >= 1){
 					mysql.query(
-						"INSERT INTO shot (id, number, sessionID, ring, teiler, winkel, x, y, unixtime) " +
+						"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime) " +
 						"VALUES ?;",
 						[insertData],
 						function(err, rows) {}
@@ -172,9 +174,7 @@ function poolLine(line){
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
 				time = rows[0].unixtime;
 			}
-			console.log(time + " "+ rows + " "+ err)
 			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
-				console.log(data);
 				var insertData = [];
 				for (i in data){
 					var single = data[i];
@@ -211,7 +211,6 @@ function poolLine(line){
 
 			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
 				var insertData = [];
-				console.log(data)
 				for (i in data){
 					var single = data[i];
 					if (single != undefined && single.id != undefined){
