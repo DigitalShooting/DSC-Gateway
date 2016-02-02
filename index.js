@@ -210,26 +210,17 @@ function poolLine(line){
 			}
 
 			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
-				var insertData = [];
 				for (i in data){
 					var single = data[i];
 					if (single != undefined && single.id != undefined){
-						insertData.push([
-							single.id,
-							single.disziplin,
-							single.line,
-							single.unixtime,
-						]);
+						mysql.query(
+							"INSERT INTO sessionGroup (id, disziplin, line, unixtime, userID) " +
+							"VALUES (?, ?, ?, ?, ?) " +
+							"ON DUPLICATE KEY UPDATE userID = ?;",
+							[single.id, single.disziplin, single.line, single.unixtime, single.userID, single.userID],
+							function(err, rows) {}
+						);
 					}
-				}
-
-				if (insertData.length >= 1){
-					mysql.query(
-						"INSERT INTO sessionGroup (id, disziplin, line, unixtime) " +
-						"VALUES ?;",
-						[insertData],
-						function(err, rows) {}
-					);
 				}
 			});
 		}
