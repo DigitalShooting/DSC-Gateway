@@ -127,8 +127,8 @@ function poolLine(line){
 
 
 	mysql.query(
-		"SELECT MAX(unixtime) as 'unixtime' FROM shot;",
-		[],
+		"SELECT MAX(unixtime) as 'unixtime' FROM shot WHERE CONTAINS(shot.sessionID, ?) ;",
+		[line._id+"_"],
 		function(err, rows) {
 			var time = 0
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
@@ -153,7 +153,8 @@ function poolLine(line){
 
 
 	mysql.query(
-		"SELECT MAX(unixtime) as 'unixtime' FROM session;",
+		"SELECT MAX(unixtime) as 'unixtime' FROM session CONTAINS(session.id, ?);",
+		[line._id+"_"],
 		function(err, rows) {
 			var time = 0
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
@@ -178,7 +179,8 @@ function poolLine(line){
 
 
 	mysql.query(
-		"SELECT MAX(unixtime) as 'unixtime' FROM sessionGroup;",
+		"SELECT MAX(unixtime) as 'unixtime' FROM sessionGroup WHERE line = ?;",
+		[line._id],
 		function(err, rows) {
 			var time = 0
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
