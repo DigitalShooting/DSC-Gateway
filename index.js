@@ -142,7 +142,7 @@ function poolLine(line){
 						insertData.push([
 							single.id,
 							single.number,
-							single.sessionID,
+							line._id + "_" + single.sessionID,
 							single.ring,
 							single.ringValue,
 							single.teiler,
@@ -158,7 +158,9 @@ function poolLine(line){
 						"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime) " +
 						"VALUES ?;",
 						[insertData],
-						function(err, rows) {}
+						function(err, rows) {
+							console.log("shot", err)
+						}
 					);
 				}
 			});
@@ -180,8 +182,8 @@ function poolLine(line){
 					var single = data[i];
 					if (single != undefined && single.id != undefined){
 						insertData.push([
-							single.id,
-							single.sessionGroupID,
+							line._id + "_" + single.id,
+							line._id + "_" + single.sessionGroupID,
 							single.part,
 							single.unixtime,
 						]);
@@ -192,7 +194,9 @@ function poolLine(line){
 						"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
 						"VALUES ?;",
 						[insertData],
-						function(err, rows) {}
+						function(err, rows) {
+							console.log("session", err)
+						}
 					);
 				}
 			});
@@ -214,11 +218,13 @@ function poolLine(line){
 					var single = data[i];
 					if (single != undefined && single.id != undefined){
 						mysql.query(
-							"INSERT INTO sessionGroup (id, disziplin, line, unixtime, userID) " +
+							"INSERT INTO sessionGroup (id, disziplin, unixtime, userID, line) " +
 							"VALUES (?, ?, ?, ?, ?) " +
 							"ON DUPLICATE KEY UPDATE userID = ?;",
-							[single.id, single.disziplin, single.line, single.unixtime, single.userID, single.userID],
-							function(err, rows) {}
+							[line._id + "_" + single.id, single.disziplin, single.unixtime, single.userID, line._id, single.userID],
+							function(err, rows) {
+								console.log("sessionGroup", err)
+							}
 						);
 					}
 				}
