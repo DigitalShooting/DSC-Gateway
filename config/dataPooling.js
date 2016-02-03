@@ -3,6 +3,6 @@ module.exports = {
 	// enable/ disable line data pooling
 	enabled: true,
 
-	// startup pooling time
-	startupPooling: 1000,
+	// time to bool bevore newest entry
+	poolingDelta: 10,
 }

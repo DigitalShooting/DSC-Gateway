@@ -132,7 +132,7 @@ function poolLine(line){
 		function(err, rows) {
 			var time = 0
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
-				time = rows[0].unixtime;
+				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
 				var insertData = [];
@@ -158,9 +158,7 @@ function poolLine(line){
 						"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime) " +
 						"VALUES ?;",
 						[insertData],
-						function(err, rows) {
-							console.log("shot", err)
-						}
+						function(err, rows) {}
 					);
 				}
 			});
@@ -174,7 +172,7 @@ function poolLine(line){
 		function(err, rows) {
 			var time = 0
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
-				time = rows[0].unixtime;
+				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
 				var insertData = [];
@@ -194,9 +192,7 @@ function poolLine(line){
 						"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
 						"VALUES ?;",
 						[insertData],
-						function(err, rows) {
-							console.log("session", err)
-						}
+						function(err, rows) {}
 					);
 				}
 			});
@@ -210,7 +206,7 @@ function poolLine(line){
 		function(err, rows) {
 			var time = 0
 			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
-				time = rows[0].unixtime;
+				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 
 			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
@@ -222,9 +218,7 @@ function poolLine(line){
 							"VALUES (?, ?, ?, ?, ?) " +
 							"ON DUPLICATE KEY UPDATE userID = ?;",
 							[line._id + "_" + single.id, single.disziplin, single.unixtime, single.userID, line._id, single.userID],
-							function(err, rows) {
-								console.log("sessionGroup", err)
-							}
+							function(err, rows) {}
 						);
 					}
 				}
