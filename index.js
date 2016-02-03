@@ -135,31 +135,16 @@ function poolLine(line){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
-				var insertData = [];
 				for (i in data){
 					var single = data[i];
 					if (single != undefined && single.id != undefined){
-						insertData.push([
-							single.id,
-							single.number,
-							line._id + "_" + single.sessionID,
-							single.ring,
-							single.ringValue,
-							single.teiler,
-							single.winkel,
-							single.x,
-							single.y,
-							single.unixtime,
-						]);
+						mysql.query(
+							"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime, serie) " +
+							"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+							[single.id, single.number, line._id + "_" + single.sessionID, single.ring, single.ringValue, single.teiler, single.winkel, single.x, single.y, single.unixtime, single.serie],
+							function(err, rows) {}
+						);
 					}
-				}
-				if (insertData.length >= 1){
-					mysql.query(
-						"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime) " +
-						"VALUES ?;",
-						[insertData],
-						function(err, rows) {}
-					);
 				}
 			});
 		}
@@ -175,25 +160,16 @@ function poolLine(line){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
-				var insertData = [];
 				for (i in data){
 					var single = data[i];
 					if (single != undefined && single.id != undefined){
-						insertData.push([
-							line._id + "_" + single.id,
-							line._id + "_" + single.sessionGroupID,
-							single.part,
-							single.unixtime,
-						]);
+						mysql.query(
+							"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
+							"VALUES (?, ?, ?, ?);",
+							[line._id + "_" + single.id, line._id + "_" + single.sessionGroupID, single.part, single.unixtime],
+							function(err, rows) {}
+						);
 					}
-				}
-				if (insertData.length >= 1){
-					mysql.query(
-						"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
-						"VALUES ?;",
-						[insertData],
-						function(err, rows) {}
-					);
 				}
 			});
 		}
