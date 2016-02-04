@@ -5,4 +5,4 @@ module.exports = {
 
 	// time to bool bevore newest entry
 	poolingDelta: 10,
-}
+};

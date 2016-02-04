@@ -1,7 +1,7 @@
 module.exports = {
 
 	// enable/ disable sql backups
-	enabled: false,
+	enabled: true,
 
 	// MySQL connection params
 	mysql: {
@@ -11,4 +11,4 @@ module.exports = {
 		password : "",
 		database : "",
 	},
-}
+};

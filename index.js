@@ -18,7 +18,7 @@ var io = require('socket.io')(server);
 server.listen(config.network.port, config.network.address);
 server.on('listening', function() {
 	console.log('Express server started on at %s:%s', server.address().address, server.address().port);
-})
+});
 
 io.on('connection', function(socket){
 	// send online DSCs to new connected client
@@ -31,15 +31,15 @@ io.on('connection', function(socket){
 	// triggers any given event on DSC
 	socket.on("setLine", function(data){
 		var lineSocket = config.lines[data.line].socket;
-		if (lineSocket != undefined){
+		if (lineSocket !== undefined){
 			lineSocket.emit(data.method, data.data);
 		}
-	})
+	});
 
 	// set power performs wakeonlan or ssh shutdown on target machine
 	socket.on('setPower', function(data){
 		var line = config.lines[data.line];
-		if (data.state == true){
+		if (data.state === true){
 			// Power On
 			exec(["wakeonlan", line.mac], function(err, out, code) { });
 		}
@@ -47,8 +47,8 @@ io.on('connection', function(socket){
 			// Power Off
 			child_process.exec(["ssh -t "+line.user+"@"+line.ip+" 'sudo shutdown -h now'"], function(err, out, code) { });
 		}
-	})
-})
+	});
+});
 
 
 
@@ -57,7 +57,7 @@ io.on('connection', function(socket){
 // store bool for each line id (true = online)
 var linesOnline = {};
 
-for (id in config.lines){
+for (var id in config.lines){
 	registerLine(id);
 }
 
@@ -77,7 +77,7 @@ function registerLine(id){
 
 	// redirect following methods
 	var methods = ["setSession", "setConfig", "setData"];
-	for (i in methods){
+	for (var i in methods){
 		setUpEvent(config.lines[id].socket, methods[i]);
 	}
 	setUpConnection(config.lines[id].socket);
@@ -101,12 +101,12 @@ function registerLine(id){
 			console.log(id+" connected");
 			linesOnline[id].online = true;
 			sendOnlineLines(io);
-		})
+		});
 		socket.on("disconnect", function(){
 			console.log(id+" disconnected");
 			linesOnline[id].online = false;
 			sendOnlineLines(io);
-		})
+		});
 	}
 }
 
@@ -121,7 +121,7 @@ function sendOnlineLines(socket){
 
 
 function poolLine(line){
-	if (config.dataPooling.enabled == false){
+	if (config.dataPooling.enabled === false){
 		return;
 	}
 
@@ -130,14 +130,14 @@ function poolLine(line){
 		"SELECT MAX(unixtime) as 'unixtime' FROM shot WHERE shot.sessionID LIKE ? ;",
 		[line._id+"_%"],
 		function(err, rows) {
-			var time = 0
-			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
+			var time = 0;
+			if (rows !== undefined && rows.length > 0 && rows[0].unixtime !== undefined){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
-				for (i in data){
+				for (var i in data){
 					var single = data[i];
-					if (single != undefined && single.id != undefined){
+					if (single !== undefined && single.id !== undefined){
 						mysql.query(
 							"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime, serie) " +
 							"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
@@ -156,14 +156,14 @@ function poolLine(line){
 		"SELECT MAX(unixtime) as 'unixtime' FROM session WHERE session.id LIKE ? ;",
 		[line._id+"_"],
 		function(err, rows) {
-			var time = 0
-			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
+			var time = 0;
+			if (rows !== undefined && rows.length > 0 && rows[0].unixtime !== undefined){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
-				for (i in data){
+				for (var i in data){
 					var single = data[i];
-					if (single != undefined && single.id != undefined){
+					if (single !== undefined && single.id !== undefined){
 						mysql.query(
 							"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
 							"VALUES (?, ?, ?, ?);",
@@ -182,15 +182,15 @@ function poolLine(line){
 		"SELECT MAX(unixtime) as 'unixtime' FROM sessionGroup WHERE line = ?;",
 		[line._id],
 		function(err, rows) {
-			var time = 0
-			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
+			var time = 0;
+			if (rows !== undefined && rows.length > 0 && rows[0].unixtime !== undefined){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 
 			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
-				for (i in data){
+				for (var i in data){
 					var single = data[i];
-					if (single != undefined && single.id != undefined){
+					if (single !== undefined && single.id !== undefined){
 						mysql.query(
 							"INSERT INTO sessionGroup (id, disziplin, unixtime, userID, line) " +
 							"VALUES (?, ?, ?, ?, ?) " +
