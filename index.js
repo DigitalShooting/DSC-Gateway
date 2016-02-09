@@ -30,9 +30,12 @@ io.on('connection', function(socket){
 
 	// triggers any given event on DSC
 	socket.on("setLine", function(data){
-		var lineSocket = config.lines[data.line].socket;
-		if (lineSocket !== undefined){
-			lineSocket.emit(data.method, data.data);
+		var line = config.lines[data.line];
+		if (line !== undefined){
+			var lineSocket = line.socket;
+			if (lineSocket !== undefined){
+				lineSocket.emit(data.method, data.data);
+			}
 		}
 	});
 
