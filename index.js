@@ -31,9 +31,9 @@ io.on('connection', function(socket){
 	// triggers any given event on DSC
 	socket.on("setLine", function(data){
 		var line = config.lines[data.line];
-		if (line !== undefined){
+		if (line != undefined){
 			var lineSocket = line.socket;
-			if (lineSocket !== undefined){
+			if (lineSocket != undefined){
 				lineSocket.emit(data.method, data.data);
 			}
 		}
@@ -42,7 +42,7 @@ io.on('connection', function(socket){
 	// set power performs wakeonlan or ssh shutdown on target machine
 	socket.on('setPower', function(data){
 		var line = config.lines[data.line];
-		if (data.state === true){
+		if (data.state == true){
 			// Power On
 			exec(["wakeonlan", line.mac], function(err, out, code) { });
 		}
@@ -124,7 +124,7 @@ function sendOnlineLines(socket){
 
 
 function poolLine(line){
-	if (config.dataPooling.enabled === false){
+	if (config.dataPooling.enabled == false){
 		return;
 	}
 
@@ -134,13 +134,13 @@ function poolLine(line){
 		[line._id+"_%"],
 		function(err, rows) {
 			var time = 0;
-			if (rows !== undefined && rows.length > 0 && rows[0].unixtime !== undefined){
+			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
 				for (var i in data){
 					var single = data[i];
-					if (single !== undefined && single.id !== undefined){
+					if (single != undefined && single.id != undefined){
 						mysql.query(
 							"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime, serie) " +
 							"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
@@ -160,13 +160,13 @@ function poolLine(line){
 		[line._id+"_"],
 		function(err, rows) {
 			var time = 0;
-			if (rows !== undefined && rows.length > 0 && rows[0].unixtime !== undefined){
+			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
 				for (var i in data){
 					var single = data[i];
-					if (single !== undefined && single.id !== undefined){
+					if (single != undefined && single.id != undefined){
 						mysql.query(
 							"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
 							"VALUES (?, ?, ?, ?);",
@@ -186,14 +186,14 @@ function poolLine(line){
 		[line._id],
 		function(err, rows) {
 			var time = 0;
-			if (rows !== undefined && rows.length > 0 && rows[0].unixtime !== undefined){
+			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
 				time = rows[0].unixtime - config.dataPooling.poolingDelta;
 			}
 
 			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
 				for (var i in data){
 					var single = data[i];
-					if (single !== undefined && single.id !== undefined){
+					if (single != undefined && single.id != undefined){
 						mysql.query(
 							"INSERT INTO sessionGroup (id, disziplin, unixtime, userID, line) " +
 							"VALUES (?, ?, ?, ?, ?) " +
