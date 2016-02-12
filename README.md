@@ -32,3 +32,4 @@ All calls from DSC to the gateway are redirected to the client, with original me
 
 ## Data Pooling
 On each `setSession` we ask the DSC API for all data, which was edited after the newes dataset in central database, and add it.
+We will add the line id as a pefix for sessionID and sessionGroupID, to get unique keys.
