@@ -3,9 +3,6 @@ var http = require("http");
 var config = require("./config/");
 var SocketClient = require("socket.io-client");
 var http = require('http');
-var RestClient = require('node-rest-client').Client;
-var rest = new RestClient();
-var mysql = require("./lib/mysql.js");
 var child_process = require('child_process');
 var exec = require("exec");
 
@@ -88,9 +85,6 @@ function registerLine(id){
 	// set up socket event method
 	function setUpEvent(socket, method){
 		socket.on(method, function(data){
-			if (method == "setSession"){
-				poolLine(line);
-			}
 			io.emit(method, {
 				line: line._id,
 				data: data,
@@ -118,93 +112,4 @@ function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
 	});
-}
-
-
-
-
-function poolLine(line){
-	if (config.dataPooling.enabled == false){
-		return;
-	}
-
-
-	mysql.query(
-		"SELECT MAX(unixtime) as 'unixtime' FROM shot WHERE shot.sessionID LIKE ? ;",
-		[line._id+"_%"],
-		function(err, rows) {
-			var time = 0;
-			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
-				time = rows[0].unixtime - config.dataPooling.poolingDelta;
-			}
-			rest.get("http://"+line.ip+":"+line.port+"/api/shot?after="+time, function(data, response){
-				for (var i in data){
-					var single = data[i];
-					if (single != undefined && single.id != undefined){
-						mysql.query(
-							"INSERT INTO shot (id, number, sessionID, ring, ringValue, teiler, winkel, x, y, unixtime, serie) " +
-							"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-							[single.id, single.number, line._id + "_" + single.sessionID, single.ring, single.ringValue, single.teiler, single.winkel, single.x, single.y, single.unixtime, single.serie],
-							function(err, rows) {}
-						);
-					}
-				}
-			});
-		}
-	);
-
-
-
-	mysql.query(
-		"SELECT MAX(unixtime) as 'unixtime' FROM session WHERE session.id LIKE ? ;",
-		[line._id+"_"],
-		function(err, rows) {
-			var time = 0;
-			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
-				time = rows[0].unixtime - config.dataPooling.poolingDelta;
-			}
-			rest.get("http://"+line.ip+":"+line.port+"/api/session?after="+time, function(data, response){
-				for (var i in data){
-					var single = data[i];
-					if (single != undefined && single.id != undefined){
-						mysql.query(
-							"INSERT INTO session (id, sessionGroupID, part, unixtime) " +
-							"VALUES (?, ?, ?, ?);",
-							[line._id + "_" + single.id, line._id + "_" + single.sessionGroupID, single.part, single.unixtime],
-							function(err, rows) {}
-						);
-					}
-				}
-			});
-		}
-	);
-
-
-
-	mysql.query(
-		"SELECT MAX(unixtime) as 'unixtime' FROM sessionGroup WHERE line = ?;",
-		[line._id],
-		function(err, rows) {
-			var time = 0;
-			if (rows != undefined && rows.length > 0 && rows[0].unixtime != undefined){
-				time = rows[0].unixtime - config.dataPooling.poolingDelta;
-			}
-
-			rest.get("http://"+line.ip+":"+line.port+"/api/sessionGroup?after="+time, function(data, response){
-				for (var i in data){
-					var single = data[i];
-					if (single != undefined && single.id != undefined){
-						mysql.query(
-							"INSERT INTO sessionGroup (id, disziplin, unixtime, userID, line) " +
-							"VALUES (?, ?, ?, ?, ?) " +
-							"ON DUPLICATE KEY UPDATE userID = ?;",
-							[line._id + "_" + single.id, single.disziplin, single.unixtime, single.userID, line._id, single.userID],
-							function(err, rows) {}
-						);
-					}
-				}
-			});
-		}
-	);
-
 }
