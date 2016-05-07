@@ -28,9 +28,9 @@ io.on('connection', function(socket){
 	// triggers any given event on DSC
 	socket.on("setLine", function(data){
 		var line = config.lines[data.line];
-		if (line != undefined){
+		if (line !== undefined){
 			var lineSocket = line.socket;
-			if (lineSocket != undefined){
+			if (lineSocket !== undefined){
 				lineSocket.emit(data.method, data.data);
 			}
 		}
@@ -39,7 +39,7 @@ io.on('connection', function(socket){
 	// set power performs wakeonlan or ssh shutdown on target machine
 	socket.on('setPower', function(data){
 		var line = config.lines[data.line];
-		if (data.state == true){
+		if (data.state === true){
 			// Power On
 			exec(["wakeonlan", line.mac], function(err, out, code) { });
 		}
@@ -76,7 +76,7 @@ function registerLine(id){
 	config.lines[id].socket = SocketClient("http://"+line.ip+":"+line.port);
 
 	// redirect following methods
-	var methods = ["setSession", "setConfig", "setData"];
+	var methods = ["setConfig", "setData"];
 	for (var i in methods){
 		setUpEvent(config.lines[id].socket, methods[i]);
 	}
