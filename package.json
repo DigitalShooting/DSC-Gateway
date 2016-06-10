@@ -4,12 +4,13 @@
   "description": "",
   "private": true,
   "dependencies": {
+    "exec": "x",
     "express": "^4.13.3",
-    "socket.io": "^1.3.6",
-    "socket.io-client": "^1.3.7",
-    "node-rest-client": "x",
+    "mongodb": "^2.1.18",
     "mysql": "x",
-    "exec": "x"
+    "node-rest-client": "x",
+    "socket.io": "^1.3.6",
+    "socket.io-client": "^1.3.7"
   },
   "main": "index.js"
 }

@@ -5,6 +5,7 @@ var SocketClient = require("socket.io-client");
 var http = require('http');
 var child_process = require('child_process');
 var exec = require("exec");
+var mongodb = require("./lib/mongodb.js");
 
 
 
@@ -14,9 +15,12 @@ var server = http.Server(app);
 var io = require('socket.io')(server);
 server.listen(config.network.port, config.network.address);
 server.on('listening', function() {
-	console.log('Express server started on at %s:%s', server.address().address, server.address().port);
+	console.log('[INFO] Express server started on at %s:%s', server.address().address, server.address().port);
 });
 
+
+
+// --------- relay connection handling -------
 io.on('connection', function(socket){
 	// send online DSCs to new connected client
 	sendOnlineLines(socket);
@@ -52,14 +56,23 @@ io.on('connection', function(socket){
 
 
 
+
+
+
+
+
 // -------- Line Sockets --------
 
 // store bool for each line id (true = online)
 var linesOnline = {};
 
-for (var id in config.lines){
-	registerLine(id);
+function registerAllLines(){
+	for (var id in config.lines){
+		registerLine(id);
+	}
 }
+
+
 
 // Register line with id
 function registerLine(id){
@@ -85,6 +98,18 @@ function registerLine(id){
 	// set up socket event method
 	function setUpEvent(socket, method){
 		socket.on(method, function(data){
+
+			if (method == "setData" && config.database.enabled){
+				if (data !== undefined && collection !== undefined){
+					collection.update(
+						{"_id" : data._id},
+						data,
+						{upsert: true, unique: true},
+						function() {}
+					);
+				}
+			}
+
 			io.emit(method, {
 				line: line._id,
 				data: data,
@@ -95,12 +120,12 @@ function registerLine(id){
 	// set up connection methods
 	function setUpConnection(socket){
 		socket.on("connect", function(){
-			console.log(id+" connected");
+			console.log("[INFO] "+id+" connected");
 			linesOnline[id].online = true;
 			sendOnlineLines(io);
 		});
 		socket.on("disconnect", function(){
-			console.log(id+" disconnected");
+			console.log("[INFO] "+id+" disconnected");
 			linesOnline[id].online = false;
 			sendOnlineLines(io);
 		});
@@ -112,4 +137,20 @@ function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
 	});
+}
+
+
+
+// ------ Main init ------
+var collection;
+if (config.database.enabled) {
+	console.log("[INFO] Connecting to Database...");
+	mongodb(function(dbCollection){
+		console.log("[INFO] Database Connected.");
+		collection = dbCollection;
+		registerAllLines();
+	});
+}
+else {
+	registerAllLines();
 }
