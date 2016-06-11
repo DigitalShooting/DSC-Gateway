@@ -144,9 +144,7 @@ function sendOnlineLines(socket){
 // ------ Main init ------
 var collection;
 if (config.database.enabled) {
-	console.log("[INFO] Connecting to Database...");
 	mongodb(function(dbCollection){
-		console.log("[INFO] Database Connected.");
 		collection = dbCollection;
 		registerAllLines();
 	});
