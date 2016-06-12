@@ -2,8 +2,8 @@ var express = require("express");
 var http = require("http");
 var config = require("./config/");
 var SocketClient = require("socket.io-client");
-var http = require('http');
-var child_process = require('child_process');
+var http = require("http");
+var child_process = require("child_process");
 var exec = require("exec");
 var mongodb = require("./lib/mongodb.js");
 
@@ -12,16 +12,16 @@ var mongodb = require("./lib/mongodb.js");
 // -------- Server Socket --------
 var app = express({ strict: true });
 var server = http.Server(app);
-var io = require('socket.io')(server);
+var io = require("socket.io")(server);
 server.listen(config.network.port, config.network.address);
-server.on('listening', function() {
-	console.log('[INFO] Express server started on at %s:%s', server.address().address, server.address().port);
+server.on("listening", function() {
+	console.log("[INFO] DSC-Gateway started (%s:%s)", server.address().address, server.address().port);
 });
 
 
 
 // --------- relay connection handling -------
-io.on('connection', function(socket){
+io.on("connection", function(socket){
 	// send online DSCs to new connected client
 	sendOnlineLines(socket);
 
@@ -41,7 +41,7 @@ io.on('connection', function(socket){
 	});
 
 	// set power performs wakeonlan or ssh shutdown on target machine
-	socket.on('setPower', function(data){
+	socket.on("setPower", function(data){
 		var line = config.lines[data.line];
 		if (data.state === true){
 			// Power On
