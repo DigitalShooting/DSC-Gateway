@@ -6,6 +6,7 @@ var http = require("http");
 var child_process = require("child_process");
 var exec = require("exec");
 var mongodb = require("./lib/mongodb.js");
+var request = require('request');
 
 
 
@@ -123,6 +124,7 @@ function registerLine(id){
 			console.log("[INFO] "+id+" connected");
 			linesOnline[id].online = true;
 			sendOnlineLines(io);
+			updateDB(id);
 		});
 		socket.on("disconnect", function(){
 			console.log("[INFO] "+id+" disconnected");
@@ -136,6 +138,37 @@ function registerLine(id){
 function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
+	});
+}
+
+
+// fetch all new session from line, while server was offline
+function updateDB(id){
+	collection.find({"$or": [{"line": id}]}).sort({date:-1}).limit(1).skip(1).toArray(function (err, data) {
+		if (err){
+			console.log(err);
+		}
+		if (data.length >= 1) {
+			loadFromLineSince(id, data[0].date);
+		}
+		else {
+			loadFromLineSince(id, 0);
+		}
+	});
+}
+function loadFromLineSince(id, date){
+	var line = linesOnline[id];
+
+	request.get("http://" + line.ip + ":" + line.port + "/api/data?sinceDate=" + date, function (error, response) {
+		var data = JSON.parse(response.body);
+		for (var i in data){
+			collection.update(
+				{"_id" : data[i]._id},
+				data[i],
+				{upsert: true, unique: true},
+				function() {}
+			);
+		}
 	});
 }
 

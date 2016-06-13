@@ -9,6 +9,7 @@
     "mongodb": "^2.1.18",
     "mysql": "x",
     "node-rest-client": "x",
+    "request": "^2.72.0",
     "socket.io": "^1.3.6",
     "socket.io-client": "^1.3.7"
   },
