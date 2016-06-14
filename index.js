@@ -159,7 +159,7 @@ function updateDB(id){
 function loadFromLineSince(id, date){
 	var line = linesOnline[id];
 
-	request.get("http://" + line.ip + ":" + line.port + "/api/data?sinceDate=" + date, function (error, response) {
+	request.get("http://" + line.ip + ":" + line.port + "/api/data?limit=1000&sinceDate=" + date, function (error, response) {
 		var data = JSON.parse(response.body);
 		for (var i in data){
 			collection.update(
