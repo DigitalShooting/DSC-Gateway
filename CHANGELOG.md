@@ -1,9 +1,5 @@
 # Changelog
 
-## Future
-- `ADD` Move disziplinen to db
-- `ADD` Add Help/ Doku
-
 ## v2.1 (In dev)
 - `ADD` Central MongoDB
 
