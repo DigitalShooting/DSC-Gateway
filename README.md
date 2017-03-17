@@ -83,4 +83,8 @@ Sends a list of all DSCs to the client.
 
 ## Caching
 We cache `setData` and `setConfig` calls from DSC -> Gateway, to serve it to new clients without `setLine` enabled.
-Therefor we call the getter methods `getData` and `getConfig` after a new line has connected.
+
+
+
+## Licence
+GNU GENERAL PUBLIC LICENSE Version 3
