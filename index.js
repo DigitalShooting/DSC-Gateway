@@ -26,33 +26,38 @@ io.on("connection", function(socket){
 	// send online DSCs to new connected client
 	sendOnlineLines(socket);
 
+	// send the online lines to the line
 	socket.on("getLines", function(){
 		sendOnlineLines(socket);
 	});
 
-	// triggers any given event on DSC
-	socket.on("setLine", function(data){
-		var line = config.lines[data.line];
-		if (line !== undefined){
-			var lineSocket = line.socket;
-			if (lineSocket !== undefined){
-				lineSocket.emit(data.method, data.data);
+	if (config.permissions.setLine) {
+		// triggers any given event on DSC
+		socket.on("setLine", function(data){
+			var line = config.lines[data.line];
+			if (line !== undefined){
+				var lineSocket = line.socket;
+				if (lineSocket !== undefined){
+					lineSocket.emit(data.method, data.data);
+				}
 			}
-		}
-	});
+		});
+	}
 
-	// set power performs wakeonlan or ssh shutdown on target machine
-	socket.on("setPower", function(data){
-		var line = config.lines[data.line];
-		if (data.state === true){
-			// Power On
-			exec(["wakeonlan", line.mac], function(err, out, code) { });
-		}
-		else {
-			// Power Off
-			child_process.exec(["ssh -t "+line.user+"@"+line.ip+" 'sudo shutdown -h now'"], function(err, out, code) { });
-		}
-	});
+	if (config.permissions.setPower) {
+		// set power performs wakeonlan or ssh shutdown on target machine
+		socket.on("setPower", function(data){
+			var line = config.lines[data.line];
+			if (data.state === true){
+				// Power On
+				exec(["wakeonlan", line.mac], function(err, out, code) { });
+			}
+			else {
+				// Power Off
+				child_process.exec(["ssh -t "+line.user+"@"+line.ip+" 'sudo shutdown -h now'"], function(err, out, code) { });
+			}
+		});
+	}
 });
 
 
@@ -86,6 +91,7 @@ function registerLine(id){
 	linesOnline[id].port = line.port;
 	linesOnline[id].labelShort = line.labelShort;
 	linesOnline[id].online = false;
+	linesOnline[id].cache = {};
 
 	config.lines[id].socket = SocketClient("http://"+line.ip+":"+line.port);
 
@@ -99,6 +105,7 @@ function registerLine(id){
 	// set up socket event method
 	function setUpEvent(socket, method){
 		socket.on(method, function(data){
+			linesOnline[id].cache[method] = data;
 
 			if (method == "setData" && config.database.enabled){
 				if (data !== undefined && collection !== undefined){
@@ -125,6 +132,8 @@ function registerLine(id){
 			linesOnline[id].online = true;
 			sendOnlineLines(io);
 			updateDB(id);
+			socket.emit("getData", {});
+			socket.emit("getConfig", {});
 		});
 		socket.on("disconnect", function(){
 			console.log("[INFO] "+id+" disconnected");
