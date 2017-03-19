@@ -63,19 +63,30 @@ Sends a list of all DSCs to the client.
 ##### Example
 ```javascript
 {
-	<lineID>: {
-		id: "<line id>",
-		label: "<line label>",
-		ip: "<line ip>",
-		port: "<line port>",
-		labelShort: "<labelShort (e.g. line number)>",
-		online: true,
-		cache = {
-			setData: { ... },
-			setConfig: { ... },
+	lines: {
+		<lineID>: {
+			id: "<line id>",
+			label: "<line label>",
+			ip: "<line ip>",
+			port: "<line port>",
+			labelShort: "<labelShort (e.g. line number)>",
+			online: true,
+			cache = {
+				setData: { ... },
+				setConfig: { ... },
+			},
+		},
+		...
+	},
+	teams: {
+		<teamID>: {
+			gesamt: 0,
+			anzahl: 0,
+			progress: 0,
+			hochrechnung: 0,
+			users: {},
 		},
 	},
-	...
 }
 ```
 
@@ -84,6 +95,10 @@ Sends a list of all DSCs to the client.
 ## Caching
 We cache `setData` and `setConfig` calls from DSC -> Gateway, to serve it to new clients without `setLine` enabled.
 
+
+## Teams
+DSC-Gateway checks for each `setData` it recevice if `verein` and `manschaft` is set in the user object.
+If so, we calculate the sum (and some metadata) for each team, by adding automatically grouping them by the combination of `verein` and `manschaft`.
 
 
 ## Licence
