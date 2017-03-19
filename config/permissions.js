@@ -7,7 +7,7 @@ module.exports = {
 	/**
 		enable/ disable writing access to the lines form extern
 	*/
-	setLine:	false,
+	setLine:	true,
 
 
 	/**

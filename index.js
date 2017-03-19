@@ -14,7 +14,10 @@ var request = require('request');
 var app = express({ strict: true });
 var server = http.Server(app);
 var io = require("socket.io")(server);
-server.listen(config.network.port, config.network.address);
+// Delay start of the public api a bit, to make sure we cached each line
+setTimeout(function(){
+	server.listen(config.network.port, config.network.address);
+}, 2000);
 server.on("listening", function() {
 	console.log("[INFO] DSC-Gateway started (%s:%s)", server.address().address, server.address().port);
 });
@@ -116,6 +119,7 @@ function registerLine(id){
 						function() {}
 					);
 				}
+				updateTeam(data);
 			}
 
 			io.emit(method, {
@@ -130,10 +134,12 @@ function registerLine(id){
 		socket.on("connect", function(){
 			console.log("[INFO] "+id+" connected");
 			linesOnline[id].online = true;
-			sendOnlineLines(io);
-			updateDB(id);
 			socket.emit("getData", {});
 			socket.emit("getConfig", {});
+			updateDB(id);
+			setTimeout(function(){
+				sendOnlineLines(io);
+			}, 2000);
 		});
 		socket.on("disconnect", function(){
 			console.log("[INFO] "+id+" disconnected");
@@ -147,9 +153,118 @@ function registerLine(id){
 function sendOnlineLines(socket){
 	socket.emit("onlineLines", {
 		lines: linesOnline,
+		teams: teams,
 	});
 }
 
+
+
+// MARK: Teams
+
+var teams = {};
+
+// todo
+// add reserve flag into session.user
+
+// reset teams manual?
+// clear and trigger getData every minute
+
+// TODO add team config to store number of users
+function updateTeam(data) {
+	if (data.user.verein === undefined || data.user.verein === "" ||
+		data.user.manschaft === undefined || data.user.manschaft === "" ||
+		data.user.firstName === undefined || data.user.firstName === "" ||
+		data.user.lastName === undefined || data.user.lastName === "") {
+		return;
+	}
+
+	var teamID = data.user.verein + "_" + data.user.manschaft;
+	var userID = data.user.firstName + "_" + data.user.lastName + "_" + data.line;
+	var session = data.sessionParts[data.sessionIndex];
+
+	// dont count ersarz
+	if (data.user.ersatz === true) { return; }
+
+	// we want more than 0 shots
+	if (data.sessionParts[data.sessionIndex].anzahl === 0) { return; }
+
+	// only if current session is not probe
+	if (data.disziplin.parts[session.type].probeEcke) { return; }
+
+	// init new team
+	if (teams[teamID] === undefined) {
+		teams[teamID] = {
+			teamID: teamID,
+			gesamt: 0,
+			anzahl: 0,
+			progress: 0,
+			hochrechnung: 0,
+			users: {},
+		};
+
+		console.log("add new team");
+		sendOnlineLines(io);
+	}
+
+	teams[teamID].users[userID] = {
+		user: data.user,
+		gesamt: session.gesamt,
+		anzahl: session.anzahl,
+	};
+
+	recalculateTeam(teamID);
+}
+
+
+/**
+ Calculate metadata of oure teams
+ */
+function recalculateTeam(teamID) {
+	var numberOfUsersInTeam = 4;
+	var numberOfShotsPerUser = 40;
+
+	// reset counts
+	teams[teamID].gesamt = 0;
+	teams[teamID].anzahl = 0;
+	teams[teamID].hochrechnung = 0;
+
+	// loop over each user and sum gesamt/ anzahl and hochrechnung
+	var userCount = 0;
+	for (var userID in teams[teamID].users) {
+		userCount += 1;
+
+		// inefficent, but working
+		teams[teamID].verein = teams[teamID].users[userID].user.verein;
+		teams[teamID].manschaft = teams[teamID].users[userID].user.manschaft;
+
+		teams[teamID].gesamt += teams[teamID].users[userID].gesamt;
+		teams[teamID].anzahl += teams[teamID].users[userID].anzahl;
+		teams[teamID].hochrechnung += teams[teamID].users[userID].gesamt / teams[teamID].users[userID].anzahl * numberOfShotsPerUser;
+	}
+
+	// calculate team schnitt
+	teams[teamID].schnitt = 0;
+	if (teams[teamID].anzahl > 0) {
+		teams[teamID].schnitt = (teams[teamID].gesamt/ teams[teamID].anzahl).toFixed(1);
+	}
+
+	// fix hochrechnung if we have less than numberOfUsersInTeam, and calculate it up
+	if (userCount > 0) {
+		teams[teamID].hochrechnung = Math.round(teams[teamID].hochrechnung / userCount * numberOfUsersInTeam);
+	}
+
+	teams[teamID].gesamt = teams[teamID].gesamt;
+	teams[teamID].progress = Math.round(teams[teamID].anzahl/(numberOfShotsPerUser*numberOfUsersInTeam)*100);
+
+	io.emit("setTeam", {
+		team: teams[teamID],
+	});
+
+}
+
+
+
+// MARK: DB
 
 // fetch all new session from line, while server was offline
 function updateDB(id){
@@ -180,6 +295,7 @@ function loadFromLineSince(id, date){
 		}
 	});
 }
+
 
 
 
