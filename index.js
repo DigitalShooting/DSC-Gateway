@@ -119,7 +119,7 @@ function registerLine(id){
 						function() {}
 					);
 				}
-				updateTeam(data);
+				updateTeam(data, line._id);
 			}
 
 			io.emit(method, {
@@ -170,29 +170,51 @@ var teams = {};
 // clear and trigger getData every minute
 
 // TODO add team config to store number of users
-function updateTeam(data) {
+function updateTeam(data, lineID) {
 	if (data.user.verein === undefined || data.user.verein === "" ||
 		data.user.manschaft === undefined || data.user.manschaft === "" ||
+		data.user.manschaftAnzahlSchuetzen === undefined || data.user.manschaftAnzahlSchuetzen === "" /*||
 		data.user.firstName === undefined || data.user.firstName === "" ||
-		data.user.lastName === undefined || data.user.lastName === "") {
+		data.user.lastName === undefined || data.user.lastName === ""*/
+	) {
 		return;
 	}
 
 	var teamID = data.user.verein + "_" + data.user.manschaft;
-	var userID = data.user.firstName + "_" + data.user.lastName + "_" + data.line;
+	var userID = lineID; //data.user.firstName + "_" + data.user.lastName + "_" + data.line;
 	var session = data.sessionParts[data.sessionIndex];
+	var updateAllTeams = false;
+
+	// remove line from (possible) other team
+	for (var t in teams) {
+		if (t != teamID) {
+			if (teams[t] != null) {
+				if (teams[t].users[userID] != null) {
+					delete teams[t].users[userID];
+					recalculateTeam(t);
+					updateAllTeams = true;
+				}
+			}
+		}
+	}
+
+
+	var addData = true;
 
 	// dont count ersarz
-	if (data.user.ersatz === true) { return; }
-
-	// we want more than 0 shots
-	if (data.sessionParts[data.sessionIndex].anzahl === 0) { return; }
+	if (data.user.ersatz === true) {
+		addData = false;
+		return;
+	}
 
 	// only if current session is not probe
-	if (data.disziplin.parts[session.type].probeEcke) { return; }
+	// if (data.disziplin.parts[session.type].probeEcke) {
+	// 	return;
+	// }
+
 
 	// init new team
-	if (teams[teamID] === undefined) {
+	if (teams[teamID] == null) {
 		teams[teamID] = {
 			teamID: teamID,
 			gesamt: 0,
@@ -203,7 +225,7 @@ function updateTeam(data) {
 		};
 
 		console.log("add new team");
-		sendOnlineLines(io);
+		updateAllTeams = true;
 	}
 
 	teams[teamID].users[userID] = {
@@ -212,7 +234,18 @@ function updateTeam(data) {
 		anzahl: session.anzahl,
 	};
 
-	recalculateTeam(teamID);
+	if (recalculateTeam(teamID)) {
+		updateAllTeams = true;
+	}
+
+	if (updateAllTeams) {
+		sendOnlineLines(io);
+	}
+	else {
+		io.emit("setTeam", {
+			team: teams[teamID],
+		});
+	}
 }
 
 
@@ -220,8 +253,7 @@ function updateTeam(data) {
  Calculate metadata of oure teams
  */
 function recalculateTeam(teamID) {
-	var numberOfUsersInTeam = 4;
-	var numberOfShotsPerUser = 40;
+	var numberOfShotsPerUser = 40; // TODO
 
 	// reset counts
 	teams[teamID].gesamt = 0;
@@ -231,35 +263,39 @@ function recalculateTeam(teamID) {
 	// loop over each user and sum gesamt/ anzahl and hochrechnung
 	var userCount = 0;
 	for (var userID in teams[teamID].users) {
-		userCount += 1;
+		if (teams[teamID].users[userID] != null) {
+			userCount += 1;
 
-		// inefficent, but working
-		teams[teamID].verein = teams[teamID].users[userID].user.verein;
-		teams[teamID].manschaft = teams[teamID].users[userID].user.manschaft;
+			// inefficent, but working
+			teams[teamID].verein = teams[teamID].users[userID].user.verein;
+			teams[teamID].manschaft = teams[teamID].users[userID].user.manschaft;
+			teams[teamID].numberOfUsersInTeam = teams[teamID].users[userID].user.manschaftAnzahlSchuetzen;
 
-		teams[teamID].gesamt += teams[teamID].users[userID].gesamt;
-		teams[teamID].anzahl += teams[teamID].users[userID].anzahl;
-		teams[teamID].hochrechnung += teams[teamID].users[userID].gesamt / teams[teamID].users[userID].anzahl * numberOfShotsPerUser;
+			teams[teamID].gesamt += teams[teamID].users[userID].gesamt;
+			teams[teamID].anzahl += teams[teamID].users[userID].anzahl;
+			teams[teamID].hochrechnung += teams[teamID].users[userID].gesamt / teams[teamID].users[userID].anzahl * numberOfShotsPerUser;
+		}
 	}
 
-	// calculate team schnitt
-	teams[teamID].schnitt = 0;
-	if (teams[teamID].anzahl > 0) {
-		teams[teamID].schnitt = (teams[teamID].gesamt/ teams[teamID].anzahl).toFixed(1);
+	if (userCount == 0 || teams[teamID].anzahl == 0) {
+		console.log("delete team", teamID);
+		delete teams[teamID];
+		return true;
 	}
+	else {
+		// calculate team schnitt
+		teams[teamID].schnitt = 0;
+		if (teams[teamID].anzahl > 0) {
+			teams[teamID].schnitt = (teams[teamID].gesamt/ teams[teamID].anzahl).toFixed(1);
+		}
 
-	// fix hochrechnung if we have less than numberOfUsersInTeam, and calculate it up
-	if (userCount > 0) {
-		teams[teamID].hochrechnung = Math.round(teams[teamID].hochrechnung / userCount * numberOfUsersInTeam);
+		// TODO if zehntel is true, ...
+		teams[teamID].hochrechnung = Math.round(teams[teamID].hochrechnung / userCount * teams[teamID].numberOfUsersInTeam);
+
+		teams[teamID].gesamt = teams[teamID].gesamt; // TODO prevent to many digits (floting point error, check if zehntel true or not and round)
+		teams[teamID].progress = Math.round(teams[teamID].anzahl/(numberOfShotsPerUser * teams[teamID].numberOfUsersInTeam)*100);
 	}
-
-	teams[teamID].gesamt = teams[teamID].gesamt;
-	teams[teamID].progress = Math.round(teams[teamID].anzahl/(numberOfShotsPerUser*numberOfUsersInTeam)*100);
-
-	io.emit("setTeam", {
-		team: teams[teamID],
-	});
-
+	return false;
 }
 
 
