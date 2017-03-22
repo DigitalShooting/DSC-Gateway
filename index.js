@@ -171,47 +171,24 @@ var teams = {};
 
 // TODO add team config to store number of users
 function updateTeam(data, lineID) {
-	if (data.user.verein === undefined || data.user.verein === "" ||
-		data.user.manschaft === undefined || data.user.manschaft === "" ||
-		data.user.manschaftAnzahlSchuetzen === undefined || data.user.manschaftAnzahlSchuetzen === "" /*||
-		data.user.firstName === undefined || data.user.firstName === "" ||
-		data.user.lastName === undefined || data.user.lastName === ""*/
+	var userID = lineID; //data.user.firstName + "_" + data.user.lastName + "_" + lineID;
+	if (
+		data.user.verein == null || data.user.verein == "" ||
+		data.user.manschaft == null || data.user.manschaft == "" ||
+		data.user.manschaftAnzahlSchuetzen == null || data.user.manschaftAnzahlSchuetzen == "" ||
+		data.user.firstName == null || data.user.firstName == ""
 	) {
+		if (clearLine(userID, null)) {
+			sendOnlineLines(io);
+		}
 		return;
 	}
 
 	var teamID = data.user.verein + "_" + data.user.manschaft;
-	var userID = lineID; //data.user.firstName + "_" + data.user.lastName + "_" + data.line;
 	var session = data.sessionParts[data.sessionIndex];
 	var updateAllTeams = false;
 
-	// remove line from (possible) other team
-	for (var t in teams) {
-		if (t != teamID) {
-			if (teams[t] != null) {
-				if (teams[t].users[userID] != null) {
-					delete teams[t].users[userID];
-					recalculateTeam(t);
-					updateAllTeams = true;
-				}
-			}
-		}
-	}
-
-
-	var addData = true;
-
-	// dont count ersarz
-	if (data.user.ersatz === true) {
-		addData = false;
-		return;
-	}
-
-	// only if current session is not probe
-	// if (data.disziplin.parts[session.type].probeEcke) {
-	// 	return;
-	// }
-
+	clearLine(userID, teamID);
 
 	// init new team
 	if (teams[teamID] == null) {
@@ -250,6 +227,28 @@ function updateTeam(data, lineID) {
 
 
 /**
+ Remove given userID from every team which is not the given teamID.
+ Returns true if something changed
+ */
+function clearLine(userID, teamID) {
+	var changed = false;
+	for (var t in teams) {
+		if (t != teamID) {
+			if (teams[t] != null) {
+				if (teams[t].users[userID] != null) {
+					delete teams[t].users[userID];
+					recalculateTeam(t);
+					changed = true;
+					console.log("clear", userID, teamID)
+				}
+			}
+		}
+	}
+	return changed;
+}
+
+
+/**
  Calculate metadata of oure teams
  */
 function recalculateTeam(teamID) {
@@ -263,7 +262,7 @@ function recalculateTeam(teamID) {
 	// loop over each user and sum gesamt/ anzahl and hochrechnung
 	var userCount = 0;
 	for (var userID in teams[teamID].users) {
-		if (teams[teamID].users[userID] != null) {
+		if (teams[teamID].users[userID] != null || teams[teamID].users[userID].user.ersatz != true) {
 			userCount += 1;
 
 			// inefficent, but working
