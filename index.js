@@ -262,7 +262,7 @@ function recalculateTeam(teamID) {
 	// loop over each user and sum gesamt/ anzahl and hochrechnung
 	var userCount = 0;
 	for (var userID in teams[teamID].users) {
-		if (teams[teamID].users[userID] != null || teams[teamID].users[userID].user.ersatz != true) {
+		if (teams[teamID].users[userID] != null && teams[teamID].users[userID].user.ersatz != true && teams[teamID].users[userID].anzahl != 0) {
 			userCount += 1;
 
 			// inefficent, but working
