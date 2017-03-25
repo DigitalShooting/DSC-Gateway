@@ -119,8 +119,9 @@ function registerLine(id){
 						function() {}
 					);
 				}
-				updateTeam(data, line._id);
 			}
+
+			updateTeam(data, line._id);
 
 			io.emit(method, {
 				line: line._id,
@@ -159,6 +160,8 @@ function sendOnlineLines(socket){
 
 
 
+
+
 // MARK: Teams
 
 var teams = {};
@@ -166,13 +169,10 @@ var teams = {};
 // todo
 // add reserve flag into session.user
 
-// reset teams manual?
-// clear and trigger getData every minute
-
-// TODO add team config to store number of users
 function updateTeam(data, lineID) {
 	var userID = lineID; //data.user.firstName + "_" + data.user.lastName + "_" + lineID;
 	if (
+		data.user == null ||
 		data.user.verein == null || data.user.verein == "" ||
 		data.user.manschaft == null || data.user.manschaft == "" ||
 		data.user.manschaftAnzahlSchuetzen == null || data.user.manschaftAnzahlSchuetzen == "" ||
@@ -201,14 +201,15 @@ function updateTeam(data, lineID) {
 			users: {},
 		};
 
-		console.log("add new team");
 		updateAllTeams = true;
 	}
 
 	teams[teamID].users[userID] = {
 		user: data.user,
-		gesamt: session.gesamt,
-		anzahl: session.anzahl,
+		gesamt: session.gesamt, // TODO remove
+		anzahl: session.anzahl, // TODO remove
+		session: session,
+		disziplin: data.disziplin,
 	};
 
 	if (recalculateTeam(teamID)) {
@@ -239,7 +240,6 @@ function clearLine(userID, teamID) {
 					delete teams[t].users[userID];
 					recalculateTeam(t);
 					changed = true;
-					console.log("clear", userID, teamID)
 				}
 			}
 		}
@@ -259,6 +259,8 @@ function recalculateTeam(teamID) {
 	teams[teamID].anzahl = 0;
 	teams[teamID].hochrechnung = 0;
 
+	var lastUser;
+
 	// loop over each user and sum gesamt/ anzahl and hochrechnung
 	var userCount = 0;
 	for (var userID in teams[teamID].users) {
@@ -269,6 +271,7 @@ function recalculateTeam(teamID) {
 			teams[teamID].verein = teams[teamID].users[userID].user.verein;
 			teams[teamID].manschaft = teams[teamID].users[userID].user.manschaft;
 			teams[teamID].numberOfUsersInTeam = teams[teamID].users[userID].user.manschaftAnzahlSchuetzen;
+			lastUser = teams[teamID].users[userID];
 
 			teams[teamID].gesamt += teams[teamID].users[userID].gesamt;
 			teams[teamID].anzahl += teams[teamID].users[userID].anzahl;
@@ -277,7 +280,6 @@ function recalculateTeam(teamID) {
 	}
 
 	if (userCount == 0 || teams[teamID].anzahl == 0) {
-		console.log("delete team", teamID);
 		delete teams[teamID];
 		return true;
 	}
@@ -289,9 +291,15 @@ function recalculateTeam(teamID) {
 		}
 
 		// TODO if zehntel is true, ...
-		teams[teamID].hochrechnung = Math.round(teams[teamID].hochrechnung / userCount * teams[teamID].numberOfUsersInTeam);
+		if (lastUser.disziplin.parts[lastUser.session.type].zehntel) {
+			teams[teamID].hochrechnung = (Math.floor(teams[teamID].hochrechnung / userCount * teams[teamID].numberOfUsersInTeam*10) / 10).toFixed(1);
+			teams[teamID].gesamt = (Math.floor(teams[teamID].gesamt*10) / 10).toFixed(1);
+		}
+		else {
+			teams[teamID].hochrechnung = Math.floor(teams[teamID].hochrechnung / userCount * teams[teamID].numberOfUsersInTeam);
+			teams[teamID].gesamt = Math.floor(teams[teamID].gesamt);
+		}
 
-		teams[teamID].gesamt = teams[teamID].gesamt; // TODO prevent to many digits (floting point error, check if zehntel true or not and round)
 		teams[teamID].progress = Math.round(teams[teamID].anzahl/(numberOfShotsPerUser * teams[teamID].numberOfUsersInTeam)*100);
 	}
 	return false;
@@ -299,10 +307,16 @@ function recalculateTeam(teamID) {
 
 
 
+
+
 // MARK: DB
 
 // fetch all new session from line, while server was offline
 function updateDB(id){
+	if (config.database.enabled) {
+		return;
+	}
+
 	collection.find({"$or": [{"line": id}]}).sort({date:-1}).limit(1).skip(1).toArray(function (err, data) {
 		if (err){
 			console.log(err);
