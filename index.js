@@ -313,7 +313,7 @@ function recalculateTeam(teamID) {
 
 // fetch all new session from line, while server was offline
 function updateDB(id){
-	if (config.database.enabled) {
+	if (config.database.enabled == false) {
 		return;
 	}
 
