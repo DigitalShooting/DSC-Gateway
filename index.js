@@ -145,6 +145,7 @@ function registerLine(id){
 		socket.on("disconnect", function(){
 			console.log("[INFO] "+id+" disconnected");
 			linesOnline[id].online = false;
+			clearLine(id, null);
 			sendOnlineLines(io);
 		});
 	}
@@ -170,7 +171,6 @@ var teams = {};
 // add reserve flag into session.user
 
 function updateTeam(data, lineID) {
-	var userID = lineID; //data.user.firstName + "_" + data.user.lastName + "_" + lineID;
 	if (
 		data.user == null ||
 		data.user.verein == null || data.user.verein == "" ||
@@ -178,7 +178,7 @@ function updateTeam(data, lineID) {
 		data.user.manschaftAnzahlSchuetzen == null || data.user.manschaftAnzahlSchuetzen == "" ||
 		data.user.firstName == null || data.user.firstName == ""
 	) {
-		if (clearLine(userID, null)) {
+		if (clearLine(lineID, null)) {
 			sendOnlineLines(io);
 		}
 		return;
@@ -188,7 +188,7 @@ function updateTeam(data, lineID) {
 	var session = data.sessionParts[data.sessionIndex];
 	var updateAllTeams = false;
 
-	clearLine(userID, teamID);
+	clearLine(lineID, teamID);
 
 	// init new team
 	if (teams[teamID] == null) {
@@ -204,7 +204,7 @@ function updateTeam(data, lineID) {
 		updateAllTeams = true;
 	}
 
-	teams[teamID].users[userID] = {
+	teams[teamID].users[lineID] = {
 		user: data.user,
 		gesamt: session.gesamt, // TODO remove
 		anzahl: session.anzahl, // TODO remove
@@ -228,16 +228,16 @@ function updateTeam(data, lineID) {
 
 
 /**
- Remove given userID from every team which is not the given teamID.
+ Remove given lineID from every team which is not the given teamID.
  Returns true if something changed
  */
-function clearLine(userID, teamID) {
+function clearLine(lineID, teamID) {
 	var changed = false;
 	for (var t in teams) {
 		if (t != teamID) {
 			if (teams[t] != null) {
-				if (teams[t].users[userID] != null) {
-					delete teams[t].users[userID];
+				if (teams[t].users[lineID] != null) {
+					delete teams[t].users[lineID];
 					recalculateTeam(t);
 					changed = true;
 				}
@@ -263,19 +263,19 @@ function recalculateTeam(teamID) {
 
 	// loop over each user and sum gesamt/ anzahl and hochrechnung
 	var userCount = 0;
-	for (var userID in teams[teamID].users) {
-		if (teams[teamID].users[userID] != null && teams[teamID].users[userID].user.ersatz != true && teams[teamID].users[userID].anzahl != 0) {
+	for (var lineID in teams[teamID].users) {
+		if (teams[teamID].users[lineID] != null && teams[teamID].users[lineID].user.ersatz != true && teams[teamID].users[lineID].anzahl != 0) {
 			userCount += 1;
 
 			// inefficent, but working
-			teams[teamID].verein = teams[teamID].users[userID].user.verein;
-			teams[teamID].manschaft = teams[teamID].users[userID].user.manschaft;
-			teams[teamID].numberOfUsersInTeam = teams[teamID].users[userID].user.manschaftAnzahlSchuetzen;
-			lastUser = teams[teamID].users[userID];
+			teams[teamID].verein = teams[teamID].users[lineID].user.verein;
+			teams[teamID].manschaft = teams[teamID].users[lineID].user.manschaft;
+			teams[teamID].numberOfUsersInTeam = teams[teamID].users[lineID].user.manschaftAnzahlSchuetzen;
+			lastUser = teams[teamID].users[lineID];
 
-			teams[teamID].gesamt += teams[teamID].users[userID].gesamt;
-			teams[teamID].anzahl += teams[teamID].users[userID].anzahl;
-			teams[teamID].hochrechnung += teams[teamID].users[userID].gesamt / teams[teamID].users[userID].anzahl * numberOfShotsPerUser;
+			teams[teamID].gesamt += teams[teamID].users[lineID].gesamt;
+			teams[teamID].anzahl += teams[teamID].users[lineID].anzahl;
+			teams[teamID].hochrechnung += teams[teamID].users[lineID].gesamt / teams[teamID].users[lineID].anzahl * numberOfShotsPerUser;
 		}
 	}
 
