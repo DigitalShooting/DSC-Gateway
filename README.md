@@ -99,6 +99,7 @@ We cache `setData` and `setConfig` calls from DSC -> Gateway, to serve it to new
 ## Teams
 DSC-Gateway checks for each `setData` it recevice if `verein` and `manschaft` is set in the user object.
 If so, we calculate the sum (and some metadata) for each team, by adding automatically grouping them by the combination of `verein` and `manschaft`.
+We use the discipline of a member, regardless if all are the same.
 
 
 ## Licence
