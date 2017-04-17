@@ -2,6 +2,28 @@
 Combine connections to multiple DSCs (sockets) to only one connection, to reduce system load and simplify the client.
 We can also pool the sessions data from DSCs to a central database, after each change.
 
+## Installation
+
+### Abhängigkeiten
+- nodejs (>4)
+- npm
+
+### Git
+````
+# clone
+git clone https://github.com/DigitalShooting/DSC-Gateway.git
+cd DSC-Gateway
+
+# NPM rebuild
+npm rebuild
+
+# configure (more under /docs/config.md)
+ls config/
+
+# start
+node index.js
+````
+
 ## API
 
 ### Client -> Gateway
