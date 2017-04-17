@@ -5,6 +5,9 @@
 - Don't save empty line data
 - Use for power off a dsc API instead ssh
 
+## v2.1.1
+- `ADD` add node_modules to repo
+
 ## v2.1
 - `ADD` Central MongoDB
 - `ADD` Permissions settings to enable/ disable setPower and setLines
