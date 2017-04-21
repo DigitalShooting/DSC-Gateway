@@ -11,8 +11,8 @@ module.exports = {
 
 
 	/**
-		enable/ disable access to the setPower function
+		enable/ disable wakeonlan function
 	*/
-	setPower: 	false,
+	startLine: 	false,
 
 };

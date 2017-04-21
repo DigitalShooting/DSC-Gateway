@@ -4,7 +4,6 @@ var config = require("./config/");
 var SocketClient = require("socket.io-client");
 var http = require("http");
 var child_process = require("child_process");
-var exec = require("exec");
 var mongodb = require("./lib/mongodb.js");
 var request = require('request');
 
@@ -38,26 +37,21 @@ io.on("connection", function(socket){
 		// triggers any given event on DSC
 		socket.on("setLine", function(data){
 			var line = config.lines[data.line];
-			if (line !== undefined){
+			if (line != undefined){
 				var lineSocket = line.socket;
-				if (lineSocket !== undefined){
+				if (lineSocket != undefined){
 					lineSocket.emit(data.method, data.data);
 				}
 			}
 		});
 	}
 
-	if (config.permissions.setPower) {
+	if (config.permissions.startLine) {
 		// set power performs wakeonlan or ssh shutdown on target machine
-		socket.on("setPower", function(data){
+		socket.on("startLine", function(data){
 			var line = config.lines[data.line];
-			if (data.state === true){
-				// Power On
-				exec(["wakeonlan", line.mac], function(err, out, code) { });
-			}
-			else {
-				// Power Off
-				child_process.exec(["ssh -t "+line.user+"@"+line.ip+" 'sudo shutdown -h now'"], function(err, out, code) { });
+			if (line != undefined) {
+				child_process.exec(["wakeonlan", line.mac], function() { });
 			}
 		});
 	}

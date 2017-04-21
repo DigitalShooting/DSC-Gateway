@@ -17,7 +17,7 @@ cd DSC-Gateway
 # NPM rebuild
 npm rebuild
 
-# configure (more under /docs/config.md)
+# configure
 ls config/
 
 # start
@@ -48,15 +48,14 @@ Can be disabled in `permissions.js` with `setLine`.
 ```
 
 
-#### `setPower`
-Power on/ off a line.
-Can be disabled in `permissions.js` with `setPower`.
+#### `startLine`
+Trigger wakeonlan for a line.
+Can be disabled in `permissions.js` with `startLine`.
 
 ##### Example
 ```javascript
 {
 	line: "<line id>",
-	state: true,
 }
 ```
 

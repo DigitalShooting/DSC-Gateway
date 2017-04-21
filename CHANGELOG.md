@@ -3,7 +3,6 @@
 ## Future
 - Do not send setData after adding/ removing team, send only onlineLines
 - Don't save empty line data
-- Use for power off a dsc API instead ssh
 
 ## v2.1.1
 - `ADD` add node_modules to repo
