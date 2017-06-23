@@ -51,7 +51,7 @@ io.on("connection", function(socket){
 		socket.on("startLine", function(data){
 			var line = config.lines[data.line];
 			if (line != undefined) {
-				child_process.exec(["wakeonlan", line.mac], function() { });
+				child_process.execFile("wakeonlan", [line.mac], function() { });
 			}
 		});
 	}
@@ -117,10 +117,13 @@ function registerLine(id){
 
 			updateTeam(data, line._id);
 
+			// Depricated
 			io.emit(method, {
 				line: line._id,
 				data: data,
 			});
+			// Send event directly to room with id_method
+			io.emit(line._id + "_" + method, data);
 		});
 	}
 
@@ -214,7 +217,11 @@ function updateTeam(data, lineID) {
 		sendOnlineLines(io);
 	}
 	else {
+		// Depricated
 		io.emit("setTeam", {
+			team: teams[teamID],
+		});
+		io.emit(teamID + "_setTeam", {
 			team: teams[teamID],
 		});
 	}
