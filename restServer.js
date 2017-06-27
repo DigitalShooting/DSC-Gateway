@@ -1,11 +1,10 @@
 const express = require("express");
 const http = require("http");
-const child_process = require("child_process");
+const BodyParser = require('body-parser');
 const SocketIO = require("socket.io");
 
 const config = require("./config/");
-const ClientSocketManager = require("./lib/ClientSocketManager.js");
-const RESTAPIClient = require("./lib/RESTAPIClient.js");
+const RESTAPIServer = require("./lib/RESTAPIServer.js");
 const TeamManager = require("./lib/TeamManager.js");
 
 var Database;
@@ -16,7 +15,6 @@ else {
   Database = require("./lib/database/NoDB.js");
 }
 
-var restAPIClient = new RESTAPIClient();
 
 
 // -------- Server Socket --------
@@ -24,12 +22,30 @@ var app = express({ strict: true });
 var server = http.Server(app);
 var io = SocketIO(server);
 
+
+
 // Delay start of the public api a bit, to make sure we cached each line
 setTimeout(function(){
   server.listen(config.network.port, config.network.address);
 }, 2000);
 server.on("listening", function() {
-  console.log("[INFO] DSC-Gateway started (%s:%s)", server.address().address, server.address().port);
+  console.log("[INFO] DSC-Relay started (%s:%s)", server.address().address, server.address().port);
+});
+
+
+
+// -------- REST Socket --------
+var restApp = express({ strict: true });
+// restApp.use(BodyParser.urlencoded({
+// 	extended: true
+// }));
+restApp.use(BodyParser.json({limit: '50mb'}));
+var httpServer = http.Server(restApp);
+setTimeout(function(){
+  httpServer.listen(config.restAPI.server.network.port, config.restAPI.server.network.address);
+}, 2000);
+httpServer.on("listening", function() {
+	console.log("[INFO] DSC-Relay started (%s:%s)", httpServer.address().address, httpServer.address().port);
 });
 
 
@@ -43,23 +59,6 @@ io.on("connection", function(socket){
   socket.on("getLines", function(){
     sendOnlineLines(socket);
   });
-
-  if (config.permissions.setLine) {
-    // triggers any given event on DSC
-    socket.on("setLine", function(data){
-      clientSocketManager.setLine(data);
-    });
-  }
-
-  if (config.permissions.startLine) {
-    // set power performs wakeonlan or ssh shutdown on target machine
-    socket.on("startLine", function(data){
-      var line = config.lines[data.line];
-      if (line != undefined) {
-        child_process.execFile("wakeonlan", [line.mac], function() { });
-      }
-    });
-  }
 });
 
 /**
@@ -67,11 +66,9 @@ io.on("connection", function(socket){
  */
 function sendOnlineLines(socket) {
   socket.emit("onlineLines", {
-    lines: clientSocketManager.linesOnline,
+    lines: restAPIServer.linesOnline,
     teams: teamManager.teams,
   });
-
-	// request.post("http://127.0.0.1:4001", })
 }
 
 function sendConfig(event) {
@@ -106,34 +103,29 @@ function sendTeam(team) {
 
 
 
-
-// ----------- ClientSocketManager -----------
-var clientSocketManager = new ClientSocketManager();
-clientSocketManager.on("setConfig", function(event){
+// ----------- RESTAPIServer -----------
+var restAPIServer = new RESTAPIServer(restApp);
+restAPIServer.on("setConfig", function(event){
   teamManager.updateWithLineData(event.data, event.line._id);
   sendConfig(event);
-	restAPIClient.setConfig(event);
 });
-clientSocketManager.on("setData", function(event){
+restAPIServer.on("setData", function(event){
   database.updateLineData(event.data);
 
   teamManager.updateWithLineData(event.data, event.line._id);
   sendData(event);
-	restAPIClient.setData(event);
 });
-clientSocketManager.on("connect", function(line){
+restAPIServer.on("connect", function(line){
   database.loadHistorieFromLine(line._id);
-	restAPIClient.connect(line);
 
   // TODO check if needet so long
   setTimeout(function(){
     sendOnlineLines(io);
   }, 2000);
 });
-clientSocketManager.on("disconnect", function(line){
+restAPIServer.on("disconnect", function(line){
   teamManager.updateWithLineDisconnect(line._id);
   sendOnlineLines(io);
-	restAPIClient.disconnect(line);
 });
 
 
@@ -150,6 +142,4 @@ teamManager.on("updateTeam", function(team){
 
 
 // ----------- Database -----------
-var database = new Database(function(){
-  clientSocketManager.connect(config.lines);
-});
+var database = new Database(function(){});

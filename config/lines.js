@@ -35,6 +35,24 @@ module.exports = {
 		port: "3006",
 		mac: "",
 	},
+	standTest5 : {
+                _id: "standTest5",
+                label: "Stand Test 5",
+                labelShort: "T5",
+                user: "firebug",
+                ip: "127.0.0.1",
+                port: "3007",
+                mac: "",
+        },
+	standTest6 : {
+                _id: "standTest6",
+                label: "Stand Test 6",
+                labelShort: "T6",
+                user: "firebug",
+                ip: "127.0.0.1",
+                port: "3008",
+                mac: "",
+        },
 
 
 	stand1 : {

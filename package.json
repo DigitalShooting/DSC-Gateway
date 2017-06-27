@@ -4,6 +4,7 @@
   "description": "",
   "private": true,
   "dependencies": {
+    "body-parser": "^1.17.2",
     "exec": "x",
     "express": "^4.15.2",
     "mongodb": "^2.2.25",

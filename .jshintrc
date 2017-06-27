@@ -11,5 +11,7 @@
 		"io",
 		"dscGatewayUrl"
 	],
-	"-W041": false
+	"-W041": false,
+	"-W104": false
+
 }
