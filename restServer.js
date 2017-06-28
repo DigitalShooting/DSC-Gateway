@@ -29,7 +29,7 @@ setTimeout(function(){
   server.listen(config.network.port, config.network.address);
 }, 2000);
 server.on("listening", function() {
-  console.log("[INFO] DSC-Relay started (%s:%s)", server.address().address, server.address().port);
+  console.log("[INFO] DSC-Gateway started (%s:%s)", server.address().address, server.address().port);
 });
 
 
