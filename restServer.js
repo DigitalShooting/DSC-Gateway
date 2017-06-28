@@ -129,6 +129,11 @@ restAPIServer.on("disconnect", function(line){
   teamManager.updateWithLineDisconnect(line._id);
   sendOnlineLines(io);
 });
+restAPIServer.on("timeout", function(line){
+  // TODO
+  teamManager.updateWithLineDisconnect(line._id);
+  sendOnlineLines(io);
+});
 
 
 
