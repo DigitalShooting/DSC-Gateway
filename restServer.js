@@ -6,16 +6,17 @@ const BodyParser = require('body-parser');
 const SocketIO = require("socket.io");
 
 const config = require("./config/");
-const RESTAPIServer = require("./lib/RESTAPIServer.js");
+const RESTAPIServer = require("./lib/restAPI/server.js");
 const TeamManager = require("./lib/TeamManager.js");
 
+// TODO: Implement Database handling for rest
 var Database;
-if (config.database.enabled) {
-  Database = require("./lib/database/MongoDB.js");
-}
-else {
+// if (config.database.enabled) {
+//   Database = require("./lib/database/MongoDB.js");
+// }
+// else {
   Database = require("./lib/database/NoDB.js");
-}
+// }
 
 
 
@@ -28,7 +29,7 @@ var io = SocketIO(server);
 
 // Delay start of the public api a bit, to make sure we cached each line
 setTimeout(function(){
-  server.listen(config.network.port, config.network.address);
+  server.listen(config.network.port+1, config.network.address);
 }, 2000);
 server.on("listening", function() {
   console.log("[INFO] DSC-Gateway started (%s:%s)", server.address().address, server.address().port);
@@ -129,9 +130,8 @@ restAPIServer.on("disconnect", function(line){
   teamManager.updateWithLineDisconnect(line._id);
   sendOnlineLines(io);
 });
-restAPIServer.on("timeout", function(line){
-  // TODO
-  teamManager.updateWithLineDisconnect(line._id);
+restAPIServer.on("timeout", function(){
+  teamManager.timeoutReset();
   sendOnlineLines(io);
 });
 

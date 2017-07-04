@@ -7,7 +7,7 @@ const SocketIO = require("socket.io");
 
 const config = require("./config/");
 const ClientSocketManager = require("./lib/ClientSocketManager.js");
-const RESTAPIClient = require("./lib/RESTAPIClient.js");
+const RESTAPIClient = require("./lib/restAPI/client.js");
 const TeamManager = require("./lib/TeamManager.js");
 
 var Database;

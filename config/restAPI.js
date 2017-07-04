@@ -15,7 +15,14 @@ module.exports = {
 		 */
 		servers: [
 			"http://127.0.0.1:5000",
+			// "http://api.live.diana-dettingen.de:62810",
 		],
+
+		/**
+		 Time interval between each keepalive package
+		 (ms)
+		 */
+		keepaliveInterval: 10 * 1000,
 
 	},
 
@@ -42,5 +49,12 @@ module.exports = {
 			*/
 			address		: 	"0.0.0.0"
 		},
+
+		/**
+		 Time interval after which we trigger a timeout
+		 (use client.keepaliveInterval * 2)
+		 (ms)
+		 */
+		keepaliveInterval: 20 * 1000,
 	},
 };
