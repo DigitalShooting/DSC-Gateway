@@ -1,4 +1,10 @@
 "use strict";
+//
+// index_relay.js
+//
+// Main file for DSC Gateway (Relay)
+// The relay recives its data from a DSC Gateway, who calls the REST API.
+//
 
 const express = require("express");
 const http = require("http");

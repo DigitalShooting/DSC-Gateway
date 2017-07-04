@@ -1,4 +1,10 @@
 "use strict";
+//
+// index.js
+//
+// Main file for DSC Gateway
+// Default DSC Gateway, will connect to each DSC Line Socket to get updates.
+//
 
 const express = require("express");
 const http = require("http");
