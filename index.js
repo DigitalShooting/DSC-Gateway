@@ -64,7 +64,7 @@ io.on("connection", function(socket){
     socket.on("startLine", function(data){
       var line = config.lines[data.line];
       if (line != undefined) {
-        child_process.execFile("wakeonlan", [line.mac], function() { });
+        child_process.exec("wakeonlan " + line.mac, function() { });
       }
     });
   }
