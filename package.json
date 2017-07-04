@@ -6,13 +6,13 @@
   "dependencies": {
     "body-parser": "^1.17.2",
     "exec": "x",
-    "express": "^4.15.2",
-    "mongodb": "^2.2.25",
+    "express": "^4.15.3",
+    "mongodb": "^2.2.29",
     "mysql": "^2.13.0",
     "node-rest-client": "^3.0.7",
     "request": "^2.81.0",
-    "socket.io": "^1.7.3",
-    "socket.io-client": "^1.7.3"
+    "socket.io": "^1.7.4",
+    "socket.io-client": "^1.7.4"
   },
   "main": "index.js"
 }
