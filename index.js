@@ -78,8 +78,6 @@ function sendOnlineLines(socket) {
     lines: clientSocketManager.linesOnline,
     teams: teamManager.teams,
   });
-
-	// request.post("http://127.0.0.1:4001", })
 }
 
 function sendConfig(event) {
