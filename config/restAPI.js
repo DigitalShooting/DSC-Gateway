@@ -14,20 +14,18 @@ module.exports = {
 		 List of server to push changes to
 		 */
 		servers: [
-			// "http://127.0.0.1:5000",
+			{
+				url: "https://api.live.diana-dettingen.de",
+				user: "user",
+				password: "pass",
+			},
 		],
 
 		/**
 		 Time interval between each keepalive package
 		 (ms)
 		 */
-		keepaliveInterval: 10 * 1000,
-
-		auth: {
-			user: "user",
-			pass: "pass",
-		},
-
+		keepaliveInterval: 1000 * 60 * 5,
 	},
 
 
@@ -59,6 +57,6 @@ module.exports = {
 		 (use client.keepaliveInterval * 2)
 		 (ms)
 		 */
-		keepaliveInterval: 20 * 1000,
+		keepaliveInterval: 1000 * 60 * 10,
 	},
 };
