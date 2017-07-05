@@ -14,8 +14,7 @@ module.exports = {
 		 List of server to push changes to
 		 */
 		servers: [
-			"http://127.0.0.1:5000",
-			// "http://api.live.diana-dettingen.de:62810",
+			// "http://127.0.0.1:5000",
 		],
 
 		/**
@@ -23,6 +22,11 @@ module.exports = {
 		 (ms)
 		 */
 		keepaliveInterval: 10 * 1000,
+
+		auth: {
+			user: "user",
+			pass: "pass",
+		},
 
 	},
 
