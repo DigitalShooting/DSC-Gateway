@@ -15,6 +15,7 @@ const config = require("./config/");
 const ClientSocketManager = require("./lib/ClientSocketManager.js");
 const RESTAPIClient = require("./lib/restAPI/client.js");
 const TeamManager = require("./lib/TeamManager.js");
+const StaticContentManger = require("./lib/StaticContentManger.js");
 
 var Database;
 if (config.database.enabled) {
@@ -59,6 +60,13 @@ io.on("connection", function(socket){
     });
   }
 
+  if (config.permissions.setStaticContent) {
+    // edit static content object
+    socket.on("setStaticContent", function(data){
+      staticContentManger.setContent(data);
+    });
+  }
+
   if (config.permissions.startLine) {
     // set power performs wakeonlan or ssh shutdown on target machine
     socket.on("startLine", function(data){
@@ -77,6 +85,7 @@ function sendOnlineLines(socket) {
   socket.emit("onlineLines", {
     lines: clientSocketManager.linesOnline,
     teams: teamManager.teams,
+    staticContent: staticContentManger.content,
   });
 }
 
@@ -109,7 +118,6 @@ function sendTeam(team) {
     team: team,
   });
 }
-
 
 
 
@@ -151,6 +159,14 @@ teamManager.on("updateAllTeams", function(){
 });
 teamManager.on("updateTeam", function(team){
   sendTeam(team);
+});
+
+
+
+// ----------- StaticContentManger -----------
+var staticContentManger = new StaticContentManger();
+staticContentManger.on("didChangeContent", function(event){
+  teamManager.updateWithLineData(event.data, event.data._id);
 });
 
 

@@ -13,5 +13,8 @@
     "socket.io": "^1.7.4",
     "socket.io-client": "^1.7.4"
   },
-  "main": "index.js"
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  }
 }
