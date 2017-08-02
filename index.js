@@ -15,7 +15,6 @@ const config = require("./config/");
 const ClientSocketManager = require("./lib/ClientSocketManager.js");
 const TeamManager = require("./lib/TeamManager.js");
 const StaticContentManger = require("./lib/StaticContentManger.js");
-const OnlineLines = require("./lib/OnlineLines.js");
 
 var Database;
 if (config.database.enabled) {
@@ -80,11 +79,11 @@ io.on("connection", function(socket){
  Send online lines event to socket or broadcast to all clients
  */
 function sendOnlineLines(socket) {
-  socket.emit("onlineLines", new OnlineLines(
-    clientSocketManager.linesOnline,
-    teamManager.teams,
-    staticContentManger.content
-  ));
+  socket.emit("onlineLines", {
+    lines: clientSocketManager.linesOnline,
+    teams: teamManager.teams,
+    staticContent: staticContentManger.content
+  });
 }
 
 function sendConfig(event) {
