@@ -13,9 +13,9 @@ const SocketIO = require("socket.io");
 
 const config = require("./config/");
 const ClientSocketManager = require("./lib/ClientSocketManager.js");
-const RESTAPIClient = require("./lib/restAPI/client.js");
 const TeamManager = require("./lib/TeamManager.js");
 const StaticContentManger = require("./lib/StaticContentManger.js");
+const OnlineLines = require("./lib/OnlineLines.js");
 
 var Database;
 if (config.database.enabled) {
@@ -24,8 +24,6 @@ if (config.database.enabled) {
 else {
   Database = require("./lib/database/NoDB.js");
 }
-
-var restAPIClient = new RESTAPIClient();
 
 
 // -------- Server Socket --------
@@ -82,11 +80,11 @@ io.on("connection", function(socket){
  Send online lines event to socket or broadcast to all clients
  */
 function sendOnlineLines(socket) {
-  socket.emit("onlineLines", {
-    lines: clientSocketManager.linesOnline,
-    teams: teamManager.teams,
-    staticContent: staticContentManger.content,
-  });
+  socket.emit("onlineLines", new OnlineLines(
+    clientSocketManager.linesOnline,
+    teamManager.teams,
+    staticContentManger.content
+  ));
 }
 
 function sendConfig(event) {
@@ -126,18 +124,15 @@ var clientSocketManager = new ClientSocketManager();
 clientSocketManager.on("setConfig", function(event){
   teamManager.updateWithLineData(event.data, event.line._id);
   sendConfig(event);
-	restAPIClient.setConfig(event);
 });
 clientSocketManager.on("setData", function(event){
   database.updateLineData(event.data);
 
   teamManager.updateWithLineData(event.data, event.line._id);
   sendData(event);
-	restAPIClient.setData(event);
 });
 clientSocketManager.on("connect", function(line){
   database.loadHistorieFromLine(line._id);
-	restAPIClient.connect(line);
 
   // TODO check if needet so long
   setTimeout(function(){
@@ -147,7 +142,6 @@ clientSocketManager.on("connect", function(line){
 clientSocketManager.on("disconnect", function(line){
   teamManager.updateWithLineDisconnect(line._id);
   sendOnlineLines(io);
-	restAPIClient.disconnect(line);
 });
 
 

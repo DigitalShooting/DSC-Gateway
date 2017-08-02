@@ -3,5 +3,5 @@ module.exports = {
 	network: require("./network.js"),
 	database: require("./database.js"),
 	permissions: require("./permissions.js"),
-	restAPI: require("./restAPI.js"),
+	relay: require("./relay.js"),
 };
