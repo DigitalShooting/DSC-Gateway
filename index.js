@@ -25,95 +25,82 @@ else {
 }
 
 
-// -------- Server Socket --------
-var app = express({ strict: true });
-var server = http.Server(app);
-var io = SocketIO(server);
 
-// Delay start of the public api a bit, to make sure we cached each line
+// Start Main Server Processes
+var serverSocketProcess = child_process.fork("./lib/GatewayHandler/Server/");
+serverSocketProcess.on("exit", function(){
+  console.error("[Main Process] serverSocketProcess did exit, stopping ...");
+  process.exit();
+});
 setTimeout(function(){
-  server.listen(config.network.port, config.network.address);
-}, 2000);
-server.on("listening", function() {
-  console.log("[INFO] DSC-Gateway started (%s:%s)", server.address().address, server.address().port);
-});
-
-
-
-// --------- relay connection handling -------
-io.on("connection", function(socket){
-  // send online DSCs to new connected client
-  sendOnlineLines(socket);
-
-  // send the online lines to the line
-  socket.on("getLines", function(){
-    sendOnlineLines(socket);
+  serverSocketProcess.send({
+    type: "connect",
+    data: config.network,
   });
+}, 2000);
 
-  if (config.permissions.setLine) {
-    // triggers any given event on DSC
-    socket.on("setLine", function(data){
-      clientSocketManager.setLine(data);
-    });
-  }
-
-  if (config.permissions.setStaticContent) {
-    // edit static content object
-    socket.on("setStaticContent", function(data){
-      staticContentManger.setContent(data);
-    });
-  }
-
-  if (config.permissions.startLine) {
-    // set power performs wakeonlan or ssh shutdown on target machine
-    socket.on("startLine", function(data){
-      var line = config.lines[data.line];
-      if (line != undefined) {
-        child_process.exec("wakeonlan " + line.mac, function() { });
-      }
-    });
-  }
+// Start Main Server Processes
+var relaySocketProcess = child_process.fork("./lib/GatewayHandler/Relay/");
+relaySocketProcess.on("exit", function(){
+  console.error("[Main Process] relaySocketProcess did exit, stopping ...");
+  process.exit();
 });
+
+
 
 /**
  Send online lines event to socket or broadcast to all clients
  */
-function sendOnlineLines(socket) {
-  socket.emit("onlineLines", {
-    lines: clientSocketManager.linesOnline,
-    teams: teamManager.teams,
-    staticContent: staticContentManger.content
-  });
+function sendOnlineLines() {
+  var event = {
+    type: "onlineLines",
+    data: {
+      lines: clientSocketManager.linesOnline,
+      teams: teamManager.teams,
+      staticContent: staticContentManger.content
+    },
+  };
+
+  serverSocketProcess.send(event);
+  relaySocketProcess.send(event); // TODO own process
 }
 
 function sendConfig(event) {
-  // Depricated
-  io.emit("setConfig", {
-    line: event.line._id,
-    data: event.data,
-  });
-  // Send event directly to room with id_method
-  io.emit(event.line._id + "_setConfig", event.data);
+  var event = {
+    type: "setConfig",
+    data: {
+      line: event.line._id,
+      data: event.data,
+    },
+  };
+
+  serverSocketProcess.send(event);
+  relaySocketProcess.send(event);
 }
 
 function sendData(event) {
-  // Depricated
-  io.emit("setData", {
-    line: event.line._id,
-    data: event.data,
-  });
-  // Send event directly to room with id_method
-  io.emit(event.line._id + "_setData", event.data);
+  var event = {
+    type: "setData",
+    data: {
+      line: event.line._id,
+      data: event.data,
+    },
+  };
+
+  serverSocketProcess.send(event);
+  relaySocketProcess.send(event);
 }
 
 function sendTeam(team) {
-  // Depricated
-  io.emit("setTeam", {
-    team: team,
-  });
-  io.emit(team.teamID + "_setTeam", {
-    team: team,
-  });
+  var event = {
+    type: "setTeam",
+    data: {
+      team: team,
+    },
+  };
+
+  serverSocketProcess.send(event);
+  relaySocketProcess.send(event);
 }
 
 
@@ -133,14 +120,13 @@ clientSocketManager.on("setData", function(event){
 clientSocketManager.on("connect", function(line){
   database.loadHistorieFromLine(line._id);
 
-  // TODO check if needet so long
   setTimeout(function(){
-    sendOnlineLines(io);
+    sendOnlineLines();
   }, 2000);
 });
 clientSocketManager.on("disconnect", function(line){
   teamManager.updateWithLineDisconnect(line._id);
-  sendOnlineLines(io);
+  sendOnlineLines();
 });
 
 
@@ -148,7 +134,7 @@ clientSocketManager.on("disconnect", function(line){
 // ----------- TeamManager -----------
 var teamManager = new TeamManager();
 teamManager.on("updateAllTeams", function(){
-  sendOnlineLines(io);
+  sendOnlineLines();
 });
 teamManager.on("updateTeam", function(team){
   sendTeam(team);
@@ -164,7 +150,12 @@ staticContentManger.on("didChangeContent", function(event){
 
 
 
+
 // ----------- Database -----------
 var database = new Database(function(){
   clientSocketManager.connect(config.lines);
+  relaySocketProcess.send({
+    type: "connect",
+    data: config.relay.relays,
+  });
 });

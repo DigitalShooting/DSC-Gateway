@@ -6,5 +6,9 @@ module.exports = {
 	/**
 	 Server to relay
 	 */
-	dscGatewayServer: "http://127.0.0.1:4000",
+	relays: [
+		{
+			url: "http://127.0.0.1:4011",
+		}
+	],
 };
