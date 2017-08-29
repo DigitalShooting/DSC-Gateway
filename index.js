@@ -28,9 +28,17 @@ else {
 
 // Start Main Server Processes
 var serverSocketProcess = child_process.fork("./lib/GatewayHandler/Server/");
+
+// clientSocketManager
+
 serverSocketProcess.on("exit", function(){
   console.error("[Main Process] serverSocketProcess did exit, stopping ...");
   process.exit();
+});
+serverSocketProcess.on("message", function(event){
+  if (event.type == "setLine") {
+    clientSocketManager.setLine(event.data);
+  }
 });
 setTimeout(function(){
   serverSocketProcess.send({
