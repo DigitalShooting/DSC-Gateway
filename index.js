@@ -113,10 +113,21 @@ function sendTeam(team) {
 
 
 
+// ----------- TeamManager -----------
+var teamManager = new TeamManager();
+teamManager.on("updateAllTeams", function(){
+  sendOnlineLines();
+});
+teamManager.on("updateTeam", function(team){
+  sendTeam(team);
+});
+
+
+
 // ----------- ClientSocketManager -----------
 var clientSocketManager = new ClientSocketManager();
 clientSocketManager.on("setConfig", function(event){
-  teamManager.updateWithLineData(event.data, event.line._id);
+  // teamManager.updateWithLineData(event.data, event.line._id);
   sendConfig(event);
 });
 clientSocketManager.on("setData", function(event){
@@ -137,16 +148,6 @@ clientSocketManager.on("disconnect", function(line){
   sendOnlineLines();
 });
 
-
-
-// ----------- TeamManager -----------
-var teamManager = new TeamManager();
-teamManager.on("updateAllTeams", function(){
-  sendOnlineLines();
-});
-teamManager.on("updateTeam", function(team){
-  sendTeam(team);
-});
 
 
 
