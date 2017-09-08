@@ -126,6 +126,9 @@ teamManager.on("updateTeam", function(team){
 
 // ----------- ClientSocketManager -----------
 var clientSocketManager = new ClientSocketManager();
+clientSocketManager.on("init", function(line){
+  sendOnlineLines();
+});
 clientSocketManager.on("setConfig", function(event){
   // teamManager.updateWithLineData(event.data, event.line._id);
   sendConfig(event);
@@ -147,6 +150,7 @@ clientSocketManager.on("disconnect", function(line){
   teamManager.updateWithLineDisconnect(line._id);
   sendOnlineLines();
 });
+
 
 
 
