@@ -1,0 +1,47 @@
+config:
+  target: "http://127.0.0.1:3000"
+  phases:
+    -
+      duration: 10
+      arrivalRate: 5
+    -
+      duration: 10
+      arrivalRate: 5
+      rampTo: 100
+    -
+      duration: 30
+      arrivalRate: 100
+scenarios:
+  -
+    engine: "socketio"
+    flow:
+      -
+        emit:
+          channel: "getData"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getData"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getData"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getData"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getData"
+          data: ""
+      -
+        think: 1

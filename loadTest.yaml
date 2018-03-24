@@ -1,0 +1,137 @@
+config:
+  target: "http://127.0.0.1:4001"
+  phases:
+    -
+      duration: 10
+      arrivalRate: 5
+    -
+      duration: 10
+      arrivalRate: 5
+      rampTo: 1000
+    -
+      duration: 30
+      arrivalRate: 1000
+scenarios:
+  -
+    engine: "socketio"
+    flow:
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1
+      -
+        emit:
+          channel: "getLines"
+          data: ""
+      -
+        think: 1

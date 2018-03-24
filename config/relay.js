@@ -9,6 +9,9 @@ module.exports = {
 	relays: [
 		{
 			url: "http://127.0.0.1:4011",
-		}
+		},
+		//{
+		//	url: "http://live.diana-dettingen.de:63656",
+		//},
 	],
 };

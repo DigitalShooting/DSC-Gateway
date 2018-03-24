@@ -49,8 +49,8 @@ module.exports = {
                 label: "Stand Test 6",
                 labelShort: "T6",
                 user: "firebug",
-                ip: "127.0.0.1",
-                port: "3008",
+                ip: "10.1.0.138",
+                port: "443",
                 mac: "",
         },
 
