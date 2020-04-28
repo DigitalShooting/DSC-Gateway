@@ -5,7 +5,7 @@ module.exports = {
 		labelShort: "T1",
 		user: "firebug",
 		ip: "127.0.0.1",
-		port: "3000",
+		port: "3008",
 		mac: "",
 	},
 	standTest2 : {
@@ -49,12 +49,12 @@ module.exports = {
                 label: "Stand Test 6",
                 labelShort: "T6",
                 user: "firebug",
-                ip: "127.0.0.1",
-                port: "3008",
+                ip: "10.1.0.105",
+                port: "3000",
                 mac: "",
         },
-
-
+	
+	
 	stand1 : {
 		_id: "stand1",
 		label: "Stand 1",
