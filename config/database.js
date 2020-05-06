@@ -1,7 +1,7 @@
 module.exports = {
 
 	// enable/ disable database pooling
-	enabled: false,
+	enabled: true,
 
 	// mongodb connection params
 	mongodb: {
